@@ -1,0 +1,1 @@
+export { generateOptimizedSignatures } from './signatures';
