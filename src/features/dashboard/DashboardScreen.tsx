@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
-import { Redirect, useRouter } from 'expo-router';
+import { Redirect, useRouter, type Href } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { calculatePythagoreanChart } from '../../domain/numerology';
@@ -87,6 +87,33 @@ export function DashboardScreen() {
       </Animated.View>
 
       <Animated.View entering={FadeInDown.duration(700).delay(520)}>
+        <Pressable
+          onPress={() => router.push('/synastry' as Href)}
+          style={({ pressed }) => [styles.heroCard, styles.synastryCard, pressed && styles.pressed]}
+        >
+          <LinearGradient
+            colors={['#3A1A28', '#12081F']}
+            end={{ x: 1, y: 1 }}
+            start={{ x: 0, y: 0 }}
+            style={styles.heroInner}
+          >
+            <AppText variant="kicker">Compatibilidade</AppText>
+            <AppText variant="title" style={styles.heroTitle}>
+              Oráculo da Aliança: Sinastria de Nomes
+            </AppText>
+            <AppText variant="body" style={styles.heroCopy}>
+              Cruze Destinos, triângulos e os 99 Arcanos Cabalísticos. Descubra se a outra firma acende o seu caminho — ou o seu bloqueio.
+            </AppText>
+            <View style={styles.heroCta}>
+              <AppText variant="caption" style={styles.heroCtaText}>
+                Abrir oráculo
+              </AppText>
+            </View>
+          </LinearGradient>
+        </Pressable>
+      </Animated.View>
+
+      <Animated.View entering={FadeInDown.duration(700).delay(620)}>
         <Pressable
           onPress={() => router.push('/(tabs)/signature-lab')}
           style={({ pressed }) => [styles.heroCard, pressed && styles.pressed]}
@@ -221,6 +248,10 @@ const styles = StyleSheet.create({
   triangleCard: {
     marginBottom: 14,
     borderColor: colors.gold,
+  },
+  synastryCard: {
+    marginBottom: 14,
+    borderColor: colors.goldSoft,
   },
   heroInner: {
     padding: 22,

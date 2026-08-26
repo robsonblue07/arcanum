@@ -1,2 +1,1 @@
-/** Sinastria amorosa e profissional. */
-export {};
+export { SynastryScreen } from './SynastryScreen';

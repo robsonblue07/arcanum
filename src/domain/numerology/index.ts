@@ -75,8 +75,27 @@ export {
   findNegativeSequences,
   readTriangleCell,
   parseBirthDate,
+  calculateSynastry,
+  collectKabbalisticArcana,
+  nameForKabbalisticArcana,
+  COMPOUND_ARCANA_MIN,
+  KABBALISTIC_ARCANA_MAX,
+  KABBALISTIC_ARCANA_MIN,
 } from './engines';
 
-export type { TriangleCellReading } from './engines';
+export type {
+  TriangleCellReading,
+  AffinitySeal,
+  ApexAlignmentKind,
+  ApexEncounter,
+  CrossedBlockage,
+  DestinyHarmony,
+  DestinyHarmonyKind,
+  NamedArcanum,
+  SynastryPersonInput,
+  SynastryPersonSnapshot,
+  SynastryResult,
+  VibrationFamily,
+} from './engines';
 
 export { generateOptimizedSignatures, selectRectifiedSignature } from './generators';
