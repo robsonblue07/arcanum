@@ -10,7 +10,14 @@
     "plugins": [
       "expo-router",
       "expo-font",
-      "expo-status-bar"
+      "expo-status-bar",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#07040F"
+        }
+      ],
+      "expo-sharing"
     ],
     "experiments": {
       "typedRoutes": true

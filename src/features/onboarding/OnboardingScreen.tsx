@@ -1,10 +1,13 @@
 import { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { extractLetters } from '../../domain/numerology';
-import { useProfileStore } from '../../store/profile-store';
+import { calculatePythagoreanChart, extractLetters } from '../../domain/numerology';
 import { brazilianDateToIso, maskBrazilianDate } from '../../lib/dates';
-import { colors } from '../../theme';
+import { isSupabaseConfigured, upsertProfile } from '../../services';
+import { toUserError } from '../../lib/to-user-error';
+import { useAuthStore } from '../../store/auth-store';
+import { useProfileStore } from '../../store/profile-store';
+import { AppText } from '../../ui/AppText';
 import { Field } from '../../ui/Field';
 import { GoldButton } from '../../ui/GoldButton';
 import { Screen } from '../../ui/Screen';
@@ -12,12 +15,15 @@ import { Screen } from '../../ui/Screen';
 export function OnboardingScreen() {
   const router = useRouter();
   const setProfile = useProfileStore((state) => state.setProfile);
+  const userId = useAuthStore((state) => state.session?.user.id);
   const [fullName, setFullName] = useState('');
   const [birthDate, setBirthDate] = useState('');
   const [nameError, setNameError] = useState<string | undefined>();
   const [dateError, setDateError] = useState<string | undefined>();
+  const [saveError, setSaveError] = useState<string | undefined>();
+  const [loading, setLoading] = useState(false);
 
-  const onSubmit = () => {
+  const onSubmit = async () => {
     const trimmed = fullName.trim();
     const iso = brazilianDateToIso(birthDate);
     const letters = extractLetters(trimmed);
@@ -27,22 +33,48 @@ export function OnboardingScreen() {
 
     setNameError(nextNameError);
     setDateError(nextDateError);
+    setSaveError(undefined);
     if (nextNameError !== undefined || nextDateError !== undefined || iso === null) {
       return;
     }
 
-    setProfile({ fullName: trimmed, birthDate: iso });
+    const chart = calculatePythagoreanChart(trimmed, iso);
+
+    const previousPremium = useProfileStore.getState().profile?.isPremium === true;
+    const localProfile = { fullName: trimmed, birthDate: iso, isPremium: previousPremium };
+
+    if (userId !== undefined && isSupabaseConfigured()) {
+      setLoading(true);
+      try {
+        await upsertProfile({
+          id: userId,
+          nome_completo: trimmed,
+          data_nascimento: iso,
+          destino: chart.destinyNumber,
+          expressao: chart.expressionNumber,
+        });
+        setProfile(localProfile);
+      } catch (caught) {
+        setSaveError(toUserError(caught));
+        setLoading(false);
+        return;
+      }
+      setLoading(false);
+    } else {
+      setProfile(localProfile);
+    }
+
     router.replace('/(tabs)/dashboard');
   };
 
   return (
     <Screen>
       <View style={styles.hero}>
-        <Text style={styles.kicker}>Arcanum</Text>
-        <Text style={styles.title}>A geometria{'\n'}do seu destino</Text>
-        <Text style={styles.subtitle}>
+        <AppText variant="kicker">Arcanum</AppText>
+        <AppText variant="display">A geometria{'\n'}do seu destino</AppText>
+        <AppText variant="body" style={styles.subtitle}>
           Pitágoras revela quem você é. A Cabala harmoniza como o mundo lê o seu nome.
-        </Text>
+        </AppText>
       </View>
 
       <View style={styles.form}>
@@ -58,7 +90,7 @@ export function OnboardingScreen() {
           value={fullName}
         />
         <Field
-          error={dateError}
+          error={dateError ?? saveError}
           keyboardType="number-pad"
           label="Data de Nascimento"
           onChangeText={(value) => {
@@ -71,7 +103,13 @@ export function OnboardingScreen() {
       </View>
 
       <View style={styles.cta}>
-        <GoldButton label="Descobrir Meu Destino" onPress={onSubmit} />
+        <GoldButton
+          label="Descobrir Meu Destino"
+          loading={loading}
+          onPress={() => {
+            void onSubmit();
+          }}
+        />
       </View>
     </Screen>
   );
@@ -83,23 +121,7 @@ const styles = StyleSheet.create({
     marginBottom: 36,
     gap: 14,
   },
-  kicker: {
-    color: colors.gold,
-    fontSize: 13,
-    letterSpacing: 6,
-    textTransform: 'uppercase',
-  },
-  title: {
-    color: colors.ivory,
-    fontSize: 40,
-    fontWeight: '300',
-    letterSpacing: 0.4,
-    lineHeight: 46,
-  },
   subtitle: {
-    color: colors.mist,
-    fontSize: 16,
-    lineHeight: 24,
     maxWidth: 340,
   },
   form: { gap: 18 },

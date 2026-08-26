@@ -23,6 +23,13 @@ export {
 } from './major-arcana';
 
 export {
+  ARCANA_MEANINGS,
+  meaningForArcana,
+  formatArcanaTitle,
+  type ArcanaMeaning,
+} from './arcana-meanings';
+
+export {
   NAME_PARTICLES,
   isNameParticle,
   splitNameWords,

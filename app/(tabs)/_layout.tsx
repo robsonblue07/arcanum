@@ -1,14 +1,24 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Redirect, Tabs } from 'expo-router';
-import { useProfileStore } from '../../src/store/profile-store';
-import { colors } from '../../src/theme';
+import { useBootGate } from '../../src/store/use-boot-gate';
+import { colors, fonts } from '../../src/theme';
+import { BootErrorScreen } from '../../src/ui/BootErrorScreen';
+import { FontSplash } from '../../src/ui/FontSplash';
 
 export default function TabsLayout() {
-  const hasHydrated = useProfileStore((state) => state.hasHydrated);
-  const profile = useProfileStore((state) => state.profile);
+  const gate = useBootGate();
 
-  if (hasHydrated && profile === null) {
-    return <Redirect href="/" />;
+  if (gate.type === 'splash') {
+    return <FontSplash />;
+  }
+  if (gate.type === 'error') {
+    return <BootErrorScreen message={gate.message} />;
+  }
+  if (gate.type === 'login') {
+    return <Redirect href="/login" />;
+  }
+  if (gate.type === 'onboarding') {
+    return <Redirect href="/onboarding" />;
   }
 
   return (
@@ -26,6 +36,7 @@ export default function TabsLayout() {
           paddingTop: 8,
         },
         tabBarLabelStyle: {
+          fontFamily: fonts.bodyMedium,
           fontSize: 11,
           letterSpacing: 0.8,
           textTransform: 'uppercase',

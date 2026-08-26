@@ -18,6 +18,16 @@ export const colors = {
   successDim: 'rgba(158, 212, 184, 0.14)',
 } as const;
 
+export const fonts = {
+  display: 'CormorantGaramond_600SemiBold',
+  displayItalic: 'CormorantGaramond_500Medium_Italic',
+  displayBold: 'CormorantGaramond_700Bold',
+  body: 'Inter_400Regular',
+  bodyMedium: 'Inter_500Medium',
+  bodySemi: 'Inter_600SemiBold',
+  bodyBold: 'Inter_700Bold',
+} as const;
+
 export const spacing = {
   xs: 6,
   sm: 10,

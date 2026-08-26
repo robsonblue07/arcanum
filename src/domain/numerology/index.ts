@@ -59,18 +59,24 @@ export {
   MAJOR_ARCANA,
   reduceToSingleDigit,
   arcanaFromSum,
+  ARCANA_MEANINGS,
+  meaningForArcana,
+  formatArcanaTitle,
   NAME_PARTICLES,
   isNameParticle,
   splitNameWords,
 } from './tables';
 
-export type { MajorArcana } from './tables';
+export type { MajorArcana, ArcanaMeaning } from './tables';
 
 export {
   calculatePythagoreanChart,
   buildKabbalisticTriangle,
   findNegativeSequences,
+  readTriangleCell,
   parseBirthDate,
 } from './engines';
 
-export { generateOptimizedSignatures } from './generators';
+export type { TriangleCellReading } from './engines';
+
+export { generateOptimizedSignatures, selectRectifiedSignature } from './generators';

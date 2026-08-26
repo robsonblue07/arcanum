@@ -1,5 +1,9 @@
-import { useMemo, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useMemo } from 'react';
+import { Platform, Pressable, StyleSheet, View } from 'react-native';
+import { Redirect, useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import Animated, { FadeInDown } from 'react-native-reanimated';
+import { LinearGradient } from 'expo-linear-gradient';
 import {
   buildKabbalisticTriangle,
   findNegativeSequences,
@@ -7,12 +11,17 @@ import {
   type NegativeSequence,
   type SignatureCandidate,
 } from '../../domain/numerology';
+import { InteractiveTriangle } from '../chart';
+import { useIsPremium } from '../../store/premium';
 import { useProfileStore } from '../../store/profile-store';
+import { useTrainingStore } from '../../store/training-store';
 import { colors, radii } from '../../theme';
+import { AppText } from '../../ui/AppText';
 import { GoldButton } from '../../ui/GoldButton';
 import { Screen } from '../../ui/Screen';
 
 export function SignatureLabScreen() {
+  const router = useRouter();
   const profile = useProfileStore((state) => state.profile);
 
   const analysis = useMemo(() => {
@@ -26,50 +35,88 @@ export function SignatureLabScreen() {
   }, [profile]);
 
   if (profile === null || analysis === null) {
-    return null;
+    return <Redirect href="/" />;
   }
 
   const blocked = analysis.sequences.length > 0;
-  const blockedCells = new Set(
-    analysis.sequences.flatMap((sequence) =>
-      sequence.cells.map((cell) => `${cell.rowIndex}:${cell.columnIndex}`),
-    ),
-  );
 
   return (
     <Screen>
-      <Text style={styles.kicker}>Laboratório de Assinaturas</Text>
-      <Text style={styles.title}>Triângulo da Vida</Text>
-      <Text style={styles.subtitle}>{profile.fullName}</Text>
+      <AppText variant="kicker">Laboratório de Assinaturas</AppText>
+      <AppText variant="title" style={styles.title}>
+        Triângulo da Vida
+      </AppText>
+      <AppText variant="body" style={styles.subtitle}>
+        {profile.fullName}
+      </AppText>
 
       {blocked ? (
         <View style={styles.alert}>
-          <Text style={styles.alertKicker}>Atenção</Text>
-          <Text style={styles.alertTitle}>Bloqueio Energético Detectado</Text>
-          <Text style={styles.alertCopy}>
+          <AppText variant="kicker" style={styles.alertKicker}>
+            Atenção
+          </AppText>
+          <AppText variant="title" style={styles.alertTitle}>
+            Bloqueio Energético Detectado
+          </AppText>
+          <AppText variant="body" style={styles.alertCopy}>
             {formatBlockSummary(analysis.sequences)} no triângulo da sua firma atual.
-          </Text>
+          </AppText>
         </View>
       ) : (
         <View style={[styles.alert, styles.alertOk]}>
-          <Text style={styles.okTitle}>Assinatura em harmonia</Text>
-          <Text style={styles.alertCopy}>Nenhuma sequência de 3 dígitos iguais foi encontrada.</Text>
+          <AppText variant="title" style={styles.okTitle}>
+            Assinatura em harmonia
+          </AppText>
+          <AppText variant="body" style={styles.alertCopy}>
+            Nenhuma sequência de 3 dígitos iguais foi encontrada.
+          </AppText>
         </View>
       )}
 
       <View style={styles.apexRow}>
-        <Text style={styles.apexLabel}>Ápice</Text>
-        <Text style={styles.apexValue}>{analysis.triangle.apex}</Text>
+        <AppText variant="caption" style={styles.apexLabel}>
+          Ápice
+        </AppText>
+        <AppText variant="number" style={styles.apexValue}>
+          {analysis.triangle.apex}
+        </AppText>
       </View>
 
-      <TrianglePreview blockedCells={blockedCells} rows={analysis.triangle.rows} />
+      <AppText variant="body" style={styles.touchHint}>
+        Toque em um número para abrir o arcano.
+      </AppText>
+      <InteractiveTriangle sequences={analysis.sequences} triangle={analysis.triangle} />
 
-      <Text style={styles.section}>Assinaturas otimizadas</Text>
+      <Pressable
+        onPress={() => router.push('/report')}
+        style={({ pressed }) => [styles.reportCard, pressed && styles.reportPressed]}
+      >
+        <LinearGradient
+          colors={['#3A1420', '#1A1230', '#2A2208']}
+          end={{ x: 1, y: 1 }}
+          start={{ x: 0, y: 0 }}
+          style={styles.reportInner}
+        >
+          <AppText variant="kicker" style={styles.reportKicker}>
+            Diagnóstico
+          </AppText>
+          <AppText variant="title" style={styles.reportTitle}>
+            Ver Relatório: Sua Assinatura Atual vs. Destino
+          </AppText>
+          <AppText variant="body" style={styles.reportCopy}>
+            O bloqueio de um lado. A firma retificada do outro. Veja o que muda no seu traço.
+          </AppText>
+        </LinearGradient>
+      </Pressable>
+
+      <AppText variant="kicker" style={styles.section}>
+        Assinaturas otimizadas
+      </AppText>
       {analysis.optimized.recommendations.length === 0 ? (
-        <Text style={styles.empty}>A firma atual já é a forma mais completa do seu nome.</Text>
+        <SignatureCard candidate={analysis.optimized.original} index={0} />
       ) : (
-        analysis.optimized.recommendations.map((candidate) => (
-          <SignatureCard candidate={candidate} key={candidate.signature} />
+        analysis.optimized.recommendations.map((candidate, index) => (
+          <SignatureCard candidate={candidate} index={index} key={candidate.signature} />
         ))
       )}
     </Screen>
@@ -84,95 +131,88 @@ function formatBlockSummary(sequences: readonly NegativeSequence[]): string {
   return `Sequências ${unique.join(', ')}`;
 }
 
-interface TrianglePreviewProps {
-  rows: readonly (readonly number[])[];
-  blockedCells: Set<string>;
-}
-
-function TrianglePreview({ rows, blockedCells }: TrianglePreviewProps) {
-  return (
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.triangleScroll}>
-      <View style={styles.triangle}>
-        {rows.map((row, rowIndex) => (
-          <View key={`row-${rowIndex}`} style={styles.triangleRow}>
-            {row.map((digit, columnIndex) => {
-              const blocked = blockedCells.has(`${rowIndex}:${columnIndex}`);
-              return (
-                <View
-                  key={`${rowIndex}-${columnIndex}`}
-                  style={[styles.digit, blocked ? styles.digitBlocked : null]}
-                >
-                  <Text style={[styles.digitText, blocked ? styles.digitTextBlocked : null]}>
-                    {digit}
-                  </Text>
-                </View>
-              );
-            })}
-          </View>
-        ))}
-      </View>
-    </ScrollView>
-  );
-}
-
-function SignatureCard({ candidate }: { candidate: SignatureCandidate }) {
-  const [saved, setSaved] = useState(false);
+function SignatureCard({
+  candidate,
+  index,
+}: {
+  candidate: SignatureCandidate;
+  index: number;
+}) {
+  const router = useRouter();
+  const startTraining = useTrainingStore((state) => state.startTraining);
+  const isPremium = useIsPremium();
   const clean = candidate.negativeSequences.length === 0;
+  const locked = !isPremium && clean;
 
   return (
-    <View style={styles.card}>
-      <Text style={styles.cardName}>{candidate.signature}</Text>
-      <View style={styles.badges}>
-        <Badge
-          ok={clean}
-          text={clean ? 'Livre de bloqueios' : `${candidate.negativeSequences.length} bloqueio(s)`}
-        />
-        <Badge
-          ok={candidate.isHarmonicWithDestiny}
-          text={
-            candidate.isHarmonicWithDestiny
-              ? `Ápice ${candidate.triangle.apex} harmônico`
-              : `Ápice ${candidate.triangle.apex}`
-          }
-        />
+    <Animated.View entering={FadeInDown.delay(140 + index * 120).duration(520)}>
+      <View style={styles.card}>
+        <View style={styles.signatureRow}>
+          <AppText
+            variant="signature"
+            style={[styles.signatureText, locked ? styles.signatureLocked : null]}
+          >
+            {candidate.signature}
+          </AppText>
+          {locked ? (
+            <View pointerEvents="none" style={styles.lockBadge}>
+              <Ionicons color={colors.goldSoft} name="lock-closed" size={16} />
+            </View>
+          ) : null}
+        </View>
+        <View style={styles.badges}>
+          <Badge
+            ok={clean}
+            text={clean ? 'Livre de bloqueios' : `${candidate.negativeSequences.length} bloqueio(s)`}
+          />
+          <Badge
+            ok={candidate.isHarmonicWithDestiny}
+            text={
+              candidate.isHarmonicWithDestiny
+                ? `Ápice ${candidate.triangle.apex} harmônico`
+                : `Ápice ${candidate.triangle.apex}`
+            }
+          />
+        </View>
+        {locked ? (
+          <GoldButton
+            label="Desbloquear Minha Nova Assinatura Próspera"
+            onPress={() => {
+              router.push('/paywall');
+            }}
+          />
+        ) : (
+          <GoldButton
+            label="Treinar esta Assinatura"
+            onPress={() => {
+              startTraining(candidate.signature);
+              router.push('/train');
+            }}
+          />
+        )}
       </View>
-      <GoldButton
-        label={saved ? 'Ateliê em breve' : 'Treinar esta Assinatura'}
-        onPress={() => {
-          setSaved(true);
-          Alert.alert(
-            'Ateliê de traçado',
-            'O canvas de treino da nova firma abre no próximo passo. Esta variação já está selecionada.',
-          );
-        }}
-      />
-    </View>
+    </Animated.View>
   );
 }
 
 function Badge({ ok, text }: { ok: boolean; text: string }) {
   return (
     <View style={[styles.badge, ok ? styles.badgeOk : styles.badgeWarn]}>
-      <Text style={[styles.badgeText, ok ? styles.badgeTextOk : styles.badgeTextWarn]}>{text}</Text>
+      <AppText
+        variant="caption"
+        style={[styles.badgeText, ok ? styles.badgeTextOk : styles.badgeTextWarn]}
+      >
+        {text}
+      </AppText>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  kicker: {
-    color: colors.gold,
-    fontSize: 12,
-    letterSpacing: 4,
-    textTransform: 'uppercase',
-  },
   title: {
-    color: colors.ivory,
-    fontSize: 30,
-    fontWeight: '300',
     marginTop: 8,
   },
   subtitle: {
-    color: colors.mist,
     marginBottom: 20,
     marginTop: 4,
   },
@@ -191,23 +231,20 @@ const styles = StyleSheet.create({
   },
   alertKicker: {
     color: colors.danger,
-    fontSize: 11,
     letterSpacing: 2,
-    textTransform: 'uppercase',
   },
   alertTitle: {
-    color: colors.ivory,
-    fontSize: 18,
-    fontWeight: '600',
+    fontSize: 22,
+    lineHeight: 28,
   },
   okTitle: {
     color: colors.success,
-    fontSize: 18,
-    fontWeight: '600',
+    fontSize: 22,
+    lineHeight: 28,
   },
   alertCopy: {
-    color: colors.mist,
-    lineHeight: 20,
+    fontSize: 15,
+    lineHeight: 22,
   },
   apexRow: {
     alignItems: 'center',
@@ -216,61 +253,44 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
   apexLabel: {
-    color: colors.mist,
     letterSpacing: 2,
-    textTransform: 'uppercase',
-    fontSize: 11,
   },
   apexValue: {
-    color: colors.goldSoft,
     fontSize: 28,
-    fontWeight: '600',
   },
-  triangleScroll: {
-    marginBottom: 28,
+  touchHint: {
+    fontSize: 13,
+    lineHeight: 18,
+    marginBottom: 8,
   },
-  triangle: {
-    alignItems: 'center',
-    alignSelf: 'center',
-    gap: 4,
-    minWidth: '100%',
-    paddingVertical: 4,
-  },
-  triangleRow: {
-    flexDirection: 'row',
-    gap: 4,
-  },
-  digit: {
-    alignItems: 'center',
-    backgroundColor: colors.plum,
-    borderColor: colors.line,
-    borderRadius: 8,
+  reportCard: {
+    borderColor: colors.gold,
+    borderRadius: radii.lg,
     borderWidth: 1,
-    height: 26,
-    justifyContent: 'center',
-    width: 22,
+    marginBottom: 24,
+    marginTop: 8,
+    overflow: 'hidden',
   },
-  digitBlocked: {
-    backgroundColor: colors.dangerDim,
-    borderColor: colors.danger,
+  reportPressed: { opacity: 0.92 },
+  reportInner: {
+    gap: 8,
+    padding: 20,
   },
-  digitText: {
-    color: colors.ivory,
-    fontSize: 11,
-  },
-  digitTextBlocked: {
+  reportKicker: {
     color: colors.danger,
-    fontWeight: '700',
+    letterSpacing: 2,
+  },
+  reportTitle: {
+    fontSize: 24,
+    lineHeight: 30,
+  },
+  reportCopy: {
+    fontSize: 14,
+    lineHeight: 20,
   },
   section: {
     color: colors.goldSoft,
-    fontSize: 13,
-    letterSpacing: 2,
     marginBottom: 14,
-    textTransform: 'uppercase',
-  },
-  empty: {
-    color: colors.mist,
   },
   card: {
     backgroundColor: 'rgba(14, 8, 28, 0.65)',
@@ -281,10 +301,27 @@ const styles = StyleSheet.create({
     marginBottom: 14,
     padding: 16,
   },
-  cardName: {
-    color: colors.ivory,
-    fontSize: 20,
-    fontStyle: 'italic',
+  signatureRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 10,
+  },
+  signatureText: {
+    flex: 1,
+  },
+  signatureLocked: {
+    opacity: 0.32,
+    ...(Platform.OS === 'web' ? { filter: 'blur(6px)' } : { letterSpacing: 2 }),
+  },
+  lockBadge: {
+    alignItems: 'center',
+    backgroundColor: colors.goldDim,
+    borderColor: colors.gold,
+    borderRadius: radii.pill,
+    borderWidth: 1,
+    height: 28,
+    justifyContent: 'center',
+    width: 28,
   },
   badges: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   badge: {
@@ -301,7 +338,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.dangerDim,
     borderColor: colors.danger,
   },
-  badgeText: { fontSize: 11, letterSpacing: 0.4 },
+  badgeText: { fontSize: 11, letterSpacing: 0.4, textTransform: 'none' },
   badgeTextOk: { color: colors.success },
   badgeTextWarn: { color: colors.danger },
 });

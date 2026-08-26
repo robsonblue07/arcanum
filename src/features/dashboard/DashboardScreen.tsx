@@ -1,11 +1,18 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useState } from 'react';
+import { Pressable, StyleSheet, View } from 'react-native';
+import { Redirect, useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
+import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { calculatePythagoreanChart } from '../../domain/numerology';
-import { calculatePersonalDay } from '../../lib/personal-day';
 import { formatDisplayDate } from '../../lib/dates';
+import { calculatePersonalDay } from '../../lib/personal-day';
+import { toUserError } from '../../lib/to-user-error';
+import { signOutCurrentUser } from '../../services';
+import { setPremiumUnlocked, useIsPremium } from '../../store/premium';
 import { useProfileStore } from '../../store/profile-store';
-import { colors, radii } from '../../theme';
+import { colors, fonts, radii } from '../../theme';
+import { AppText } from '../../ui/AppText';
+import { GhostButton } from '../../ui/GhostButton';
 import { GoldButton } from '../../ui/GoldButton';
 import { NumberSeal } from '../../ui/NumberSeal';
 import { Screen } from '../../ui/Screen';
@@ -14,9 +21,13 @@ export function DashboardScreen() {
   const router = useRouter();
   const profile = useProfileStore((state) => state.profile);
   const clearProfile = useProfileStore((state) => state.clearProfile);
+  const [leaving, setLeaving] = useState(false);
+  const [leaveError, setLeaveError] = useState<string | undefined>();
+  const isPremium = useIsPremium();
+  const [simulating, setSimulating] = useState(false);
 
   if (profile === null) {
-    return null;
+    return <Redirect href="/" />;
   }
 
   const chart = calculatePythagoreanChart(profile.fullName, profile.birthDate);
@@ -24,49 +35,139 @@ export function DashboardScreen() {
 
   return (
     <Screen>
-      <Text style={styles.kicker}>Mapa pessoal</Text>
-      <Text style={styles.hello}>Olá, {firstName(profile.fullName)}</Text>
-      <Text style={styles.meta}>{formatDisplayDate(profile.birthDate)}</Text>
+      <Animated.View entering={FadeIn.duration(800).delay(40)} style={styles.intro}>
+        <AppText variant="kicker">Mapa pessoal</AppText>
+        <AppText variant="title" style={styles.hello}>
+          Olá, {firstName(profile.fullName)}
+        </AppText>
+        <AppText variant="body" style={styles.meta}>
+          {formatDisplayDate(profile.birthDate)}
+        </AppText>
+      </Animated.View>
 
-      <View style={styles.seals}>
+      <Animated.View entering={FadeInDown.duration(700).delay(180)} style={styles.seals}>
         <NumberSeal caption="Destino" size="lg" value={chart.destinyNumber} />
         <NumberSeal caption="Missão" value={chart.expressionNumber} />
-      </View>
+      </Animated.View>
 
-      <View style={styles.dayChip}>
-        <Text style={styles.dayLabel}>Dia pessoal</Text>
-        <Text style={styles.dayValue}>{personalDay}</Text>
-      </View>
+      <Animated.View entering={FadeIn.duration(650).delay(320)} style={styles.dayChip}>
+        <AppText variant="caption" style={styles.dayLabel}>
+          Dia pessoal
+        </AppText>
+        <AppText variant="number" style={styles.dayValue}>
+          {personalDay}
+        </AppText>
+      </Animated.View>
 
-      <Pressable
-        onPress={() => router.push('/(tabs)/signature-lab')}
-        style={({ pressed }) => [styles.heroCard, pressed && styles.pressed]}
-      >
-        <LinearGradient
-          colors={['#2A1652', '#12081F']}
-          end={{ x: 1, y: 1 }}
-          start={{ x: 0, y: 0 }}
-          style={styles.heroInner}
+      <Animated.View entering={FadeInDown.duration(700).delay(420)}>
+        <Pressable
+          onPress={() => router.push('/triangle')}
+          style={({ pressed }) => [styles.heroCard, styles.triangleCard, pressed && styles.pressed]}
         >
-          <Text style={styles.heroKicker}>Laboratório Cabalístico</Text>
-          <Text style={styles.heroTitle}>Analisar e Retificar Assinatura</Text>
-          <Text style={styles.heroCopy}>
-            Descubra bloqueios no Triângulo da Vida e receba firmas harmônicas com o seu Destino.
-          </Text>
-          <View style={styles.heroCta}>
-            <Text style={styles.heroCtaText}>Entrar no laboratório</Text>
-          </View>
-        </LinearGradient>
-      </Pressable>
+          <LinearGradient
+            colors={['#3A2A08', '#160E28']}
+            end={{ x: 1, y: 1 }}
+            start={{ x: 0, y: 0 }}
+            style={styles.heroInner}
+          >
+            <AppText variant="kicker">Visão cabalística</AppText>
+            <AppText variant="title" style={styles.heroTitle}>
+              Explorar Meu Triângulo da Vida
+            </AppText>
+            <AppText variant="body" style={styles.heroCopy}>
+              Toque nos números da pirâmide e revele os arcanos que vibram no seu nome.
+            </AppText>
+            <View style={styles.heroCta}>
+              <AppText variant="caption" style={styles.heroCtaText}>
+                Abrir visualizador
+              </AppText>
+            </View>
+          </LinearGradient>
+        </Pressable>
+      </Animated.View>
 
-      <GoldButton
-        label="Recalcular nascimento"
-        onPress={() => {
-          clearProfile();
-          router.replace('/');
-        }}
-        style={styles.ghost}
-      />
+      <Animated.View entering={FadeInDown.duration(700).delay(520)}>
+        <Pressable
+          onPress={() => router.push('/(tabs)/signature-lab')}
+          style={({ pressed }) => [styles.heroCard, pressed && styles.pressed]}
+        >
+          <LinearGradient
+            colors={['#2A1652', '#12081F']}
+            end={{ x: 1, y: 1 }}
+            start={{ x: 0, y: 0 }}
+            style={styles.heroInner}
+          >
+            <AppText variant="kicker" style={styles.heroKicker}>
+              Laboratório Cabalístico
+            </AppText>
+            <AppText variant="title" style={styles.heroTitle}>
+              Analisar e Retificar Assinatura
+            </AppText>
+            <AppText variant="body" style={styles.heroCopy}>
+              Descubra bloqueios no Triângulo da Vida e receba firmas harmônicas com o seu Destino.
+            </AppText>
+            <View style={styles.heroCta}>
+              <AppText variant="caption" style={styles.heroCtaText}>
+                Entrar no laboratório
+              </AppText>
+            </View>
+          </LinearGradient>
+        </Pressable>
+      </Animated.View>
+
+      <Animated.View entering={FadeIn.duration(500).delay(640)}>
+        <GoldButton
+          label="Recalcular nascimento"
+          onPress={() => {
+            clearProfile();
+            router.replace('/onboarding');
+          }}
+          style={styles.ghost}
+        />
+        <GhostButton
+          disabled={leaving}
+          label={leaving ? 'Saindo...' : 'Sair da conta'}
+          onPress={() => {
+            void (async () => {
+              setLeaveError(undefined);
+              setLeaving(true);
+              try {
+                await signOutCurrentUser();
+                router.replace('/');
+              } catch (caught) {
+                setLeaveError(toUserError(caught));
+                setLeaving(false);
+              }
+            })();
+          }}
+          style={styles.logout}
+        />
+        {__DEV__ ? (
+          <GhostButton
+            disabled={simulating}
+            label={isPremium ? 'Dev: simular modo Free' : 'Dev: simular compra Pro'}
+            onPress={() => {
+              void (async () => {
+                setSimulating(true);
+                setLeaveError(undefined);
+                try {
+                  await setPremiumUnlocked(!isPremium);
+                } catch (caught) {
+                  setLeaveError(toUserError(caught));
+                } finally {
+                  setSimulating(false);
+                }
+              })();
+            }}
+            style={styles.devToggle}
+          />
+        ) : null}
+        {leaveError !== undefined ? (
+          <AppText variant="body" style={styles.leaveError}>
+            {leaveError}
+          </AppText>
+        ) : null}
+      </Animated.View>
     </Screen>
   );
 }
@@ -76,22 +177,14 @@ function firstName(fullName: string): string {
 }
 
 const styles = StyleSheet.create({
-  kicker: {
-    color: colors.gold,
-    fontSize: 12,
-    letterSpacing: 4,
-    textTransform: 'uppercase',
-  },
+  intro: { marginBottom: 8 },
   hello: {
-    color: colors.ivory,
-    fontSize: 32,
-    fontWeight: '300',
     marginTop: 8,
   },
   meta: {
-    color: colors.mist,
     marginTop: 4,
-    marginBottom: 28,
+    marginBottom: 20,
+    fontSize: 15,
   },
   seals: {
     flexDirection: 'row',
@@ -113,15 +206,11 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   dayLabel: {
-    color: colors.mist,
-    fontSize: 11,
     letterSpacing: 1.6,
-    textTransform: 'uppercase',
   },
   dayValue: {
-    color: colors.goldSoft,
     fontSize: 18,
-    fontWeight: '700',
+    fontFamily: fonts.bodyBold,
   },
   heroCard: {
     borderRadius: radii.lg,
@@ -129,24 +218,23 @@ const styles = StyleSheet.create({
     borderColor: colors.line,
     borderWidth: 1,
   },
+  triangleCard: {
+    marginBottom: 14,
+    borderColor: colors.gold,
+  },
   heroInner: {
     padding: 22,
     gap: 10,
   },
   heroKicker: {
     color: colors.neon,
-    fontSize: 11,
     letterSpacing: 2,
-    textTransform: 'uppercase',
   },
   heroTitle: {
-    color: colors.ivory,
-    fontSize: 24,
-    fontWeight: '600',
-    lineHeight: 30,
+    fontSize: 26,
+    lineHeight: 32,
   },
   heroCopy: {
-    color: colors.mist,
     fontSize: 15,
     lineHeight: 22,
   },
@@ -161,10 +249,16 @@ const styles = StyleSheet.create({
   },
   heroCtaText: {
     color: colors.goldSoft,
-    fontSize: 12,
     letterSpacing: 1,
-    textTransform: 'uppercase',
   },
   pressed: { opacity: 0.92 },
   ghost: { marginTop: 22, opacity: 0.72 },
+  logout: { marginTop: 12 },
+  devToggle: { marginTop: 12, opacity: 0.55 },
+  leaveError: {
+    color: colors.danger,
+    fontSize: 13,
+    marginTop: 10,
+    textAlign: 'center',
+  },
 });

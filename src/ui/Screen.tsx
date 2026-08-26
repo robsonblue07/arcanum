@@ -20,7 +20,7 @@ export function Screen({ children, scroll = true }: ScreenProps) {
       {children}
     </ScrollView>
   ) : (
-    <View style={styles.content}>{children}</View>
+    <View style={[styles.content, styles.fill]}>{children}</View>
   );
 
   return (
@@ -46,4 +46,5 @@ const styles = StyleSheet.create({
     paddingTop: 12,
     paddingBottom: 36,
   },
+  fill: { flex: 1 },
 });

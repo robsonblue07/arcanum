@@ -1,1 +1,1 @@
-export { generateOptimizedSignatures } from './signatures';
+export { generateOptimizedSignatures, selectRectifiedSignature } from './signatures';

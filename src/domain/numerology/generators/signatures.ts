@@ -229,3 +229,18 @@ export function generateOptimizedSignatures(
 
   return { original, recommendations };
 }
+
+/**
+ * Primeira firma da lista otimizada que está livre de bloqueios.
+ * Se nenhuma estiver limpa, devolve a melhor recomendação (ou a original).
+ */
+export function selectRectifiedSignature(
+  result: OptimizedSignaturesResult,
+): SignatureCandidate {
+  const clean = result.recommendations.find((item) => item.negativeSequences.length === 0);
+  if (clean !== undefined) {
+    return clean;
+  }
+  return result.recommendations[0] ?? result.original;
+}
+

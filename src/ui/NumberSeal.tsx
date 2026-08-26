@@ -1,5 +1,5 @@
 import { StyleSheet, Text, View } from 'react-native';
-import { colors } from '../theme';
+import { colors, fonts } from '../theme';
 
 interface NumberSealProps {
   value: number;
@@ -47,10 +47,11 @@ const styles = StyleSheet.create({
   },
   value: {
     color: colors.goldSoft,
-    fontWeight: '600',
+    fontFamily: fonts.bodySemi,
   },
   caption: {
     color: colors.mist,
+    fontFamily: fonts.bodyMedium,
     fontSize: 12,
     letterSpacing: 2,
     textTransform: 'uppercase',

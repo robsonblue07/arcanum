@@ -1,6 +1,7 @@
 import {
   buildKabbalisticTriangle,
   findNegativeSequences,
+  readTriangleCell,
   reduceToSingleDigit,
   letterToKabbalistic,
 } from '../../src/domain/numerology';
@@ -117,5 +118,26 @@ describe('findNegativeSequences', () => {
   it('não marca pares (22, 44) como sequência negativa', () => {
     const sequences = findNegativeSequences([[1, 1, 2, 2, 3]]);
     expect(sequences).toEqual([]);
+  });
+});
+
+describe('readTriangleCell', () => {
+  it('abre o Arcano 13 — A Morte no nó composto de Pe', () => {
+    const triangle = buildKabbalisticTriangle('Pe');
+    const reading = readTriangleCell(triangle, 1, 0, false);
+
+    expect(reading?.title).toBe('Arcano 13 — A Morte');
+    expect(reading?.displayedDigit).toBe(4);
+    expect(reading?.compoundArcana).toBe(true);
+    expect(reading?.unreducedSum).toBe(13);
+  });
+
+  it('abre o Arcano da letra na base da pirâmide', () => {
+    const triangle = buildKabbalisticTriangle('Pe');
+    const reading = readTriangleCell(triangle, 0, 0, false);
+
+    expect(reading?.letter).toBe('P');
+    expect(reading?.title).toBe('Arcano 8 — A Justiça');
+    expect(reading?.compoundArcana).toBe(false);
   });
 });

@@ -1,4 +1,4 @@
-import { generateOptimizedSignatures } from '../../src/domain/numerology';
+import { generateOptimizedSignatures, selectRectifiedSignature } from '../../src/domain/numerology';
 import { MARIA_DA_SILVA, MARIA_BIRTH_DATE } from './fixtures';
 
 describe('generateOptimizedSignatures', () => {
@@ -50,5 +50,16 @@ describe('generateOptimizedSignatures', () => {
     const scores = result.recommendations.map((item) => item.score);
     const sorted = [...scores].sort((a, b) => b - a);
     expect(scores).toEqual(sorted);
+  });
+});
+
+describe('selectRectifiedSignature', () => {
+  it('escolhe a primeira firma livre de bloqueios da lista otimizada', () => {
+    const result = generateOptimizedSignatures(MARIA_DA_SILVA, MARIA_BIRTH_DATE);
+    const rectified = selectRectifiedSignature(result);
+
+    expect(rectified.signature).not.toBe(result.original.signature);
+    expect(rectified.negativeSequences).toEqual([]);
+    expect(rectified.score).toBeGreaterThan(result.original.score);
   });
 });

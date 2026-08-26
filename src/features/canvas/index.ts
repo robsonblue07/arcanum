@@ -1,2 +1,2 @@
-/** Canvas de treino do traçado da nova assinatura. */
-export {};
+export { TrainingScreen } from './TrainingScreen';
+export { SignaturePad, type SignaturePadHandle } from './SignaturePad';
