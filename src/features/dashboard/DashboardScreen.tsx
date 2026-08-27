@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Redirect, useRouter, type Href } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useTranslation } from 'react-i18next';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { calculatePythagoreanChart } from '../../domain/numerology';
 import { formatDisplayDate } from '../../lib/dates';
@@ -14,10 +15,12 @@ import { colors, fonts, radii } from '../../theme';
 import { AppText } from '../../ui/AppText';
 import { GhostButton } from '../../ui/GhostButton';
 import { GoldButton } from '../../ui/GoldButton';
+import { LanguageSwitcher } from '../../ui/LanguageSwitcher';
 import { NumberSeal } from '../../ui/NumberSeal';
 import { Screen } from '../../ui/Screen';
 
 export function DashboardScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const profile = useProfileStore((state) => state.profile);
   const clearProfile = useProfileStore((state) => state.clearProfile);
@@ -36,9 +39,12 @@ export function DashboardScreen() {
   return (
     <Screen>
       <Animated.View entering={FadeIn.duration(800).delay(40)} style={styles.intro}>
-        <AppText variant="kicker">Mapa pessoal</AppText>
+        <View style={styles.introHeader}>
+          <AppText variant="kicker">{t('dashboard.kicker')}</AppText>
+          <LanguageSwitcher />
+        </View>
         <AppText variant="title" style={styles.hello}>
-          Olá, {firstName(profile.fullName)}
+          {t('dashboard.hello', { name: firstName(profile.fullName) })}
         </AppText>
         <AppText variant="body" style={styles.meta}>
           {formatDisplayDate(profile.birthDate)}
@@ -46,13 +52,13 @@ export function DashboardScreen() {
       </Animated.View>
 
       <Animated.View entering={FadeInDown.duration(700).delay(180)} style={styles.seals}>
-        <NumberSeal caption="Destino" size="lg" value={chart.destinyNumber} />
-        <NumberSeal caption="Missão" value={chart.expressionNumber} />
+        <NumberSeal caption={t('common.destiny')} size="lg" value={chart.destinyNumber} />
+        <NumberSeal caption={t('common.mission')} value={chart.expressionNumber} />
       </Animated.View>
 
       <Animated.View entering={FadeIn.duration(650).delay(320)} style={styles.dayChip}>
         <AppText variant="caption" style={styles.dayLabel}>
-          Dia pessoal
+          {t('common.personalDay')}
         </AppText>
         <AppText variant="number" style={styles.dayValue}>
           {personalDay}
@@ -70,16 +76,16 @@ export function DashboardScreen() {
             start={{ x: 0, y: 0 }}
             style={styles.heroInner}
           >
-            <AppText variant="kicker">Previsão do dia</AppText>
+            <AppText variant="kicker">{t('dashboard.oracleKicker')}</AppText>
             <AppText variant="title" style={styles.heroTitle}>
-              Oráculo Diário: Sua Energia Hoje
+              {t('dashboard.oracleTitle')}
             </AppText>
             <AppText variant="body" style={styles.heroCopy}>
-              O Dia Pessoal {personalDay} já vibra no seu mapa. Abra o oráculo e receba o conselho deste ciclo.
+              {t('dashboard.oracleCopy', { day: personalDay })}
             </AppText>
             <View style={styles.heroCta}>
               <AppText variant="caption" style={styles.heroCtaText}>
-                Consultar o dia
+                {t('dashboard.oracleCta')}
               </AppText>
             </View>
           </LinearGradient>
@@ -97,16 +103,16 @@ export function DashboardScreen() {
             start={{ x: 0, y: 0 }}
             style={styles.heroInner}
           >
-            <AppText variant="kicker">Visão cabalística</AppText>
+            <AppText variant="kicker">{t('dashboard.triangleKicker')}</AppText>
             <AppText variant="title" style={styles.heroTitle}>
-              Explorar Meu Triângulo da Vida
+              {t('dashboard.triangleTitle')}
             </AppText>
             <AppText variant="body" style={styles.heroCopy}>
-              Toque nos números da pirâmide e revele os arcanos que vibram no seu nome.
+              {t('dashboard.triangleCopy')}
             </AppText>
             <View style={styles.heroCta}>
               <AppText variant="caption" style={styles.heroCtaText}>
-                Abrir visualizador
+                {t('dashboard.triangleCta')}
               </AppText>
             </View>
           </LinearGradient>
@@ -124,16 +130,16 @@ export function DashboardScreen() {
             start={{ x: 0, y: 0 }}
             style={styles.heroInner}
           >
-            <AppText variant="kicker">Compatibilidade</AppText>
+            <AppText variant="kicker">{t('dashboard.synastryKicker')}</AppText>
             <AppText variant="title" style={styles.heroTitle}>
-              Oráculo da Aliança: Sinastria de Nomes
+              {t('dashboard.synastryTitle')}
             </AppText>
             <AppText variant="body" style={styles.heroCopy}>
-              Cruze Destinos, triângulos e os 99 Arcanos Cabalísticos. Descubra se a outra firma acende o seu caminho — ou o seu bloqueio.
+              {t('dashboard.synastryCopy')}
             </AppText>
             <View style={styles.heroCta}>
               <AppText variant="caption" style={styles.heroCtaText}>
-                Abrir oráculo
+                {t('dashboard.synastryCta')}
               </AppText>
             </View>
           </LinearGradient>
@@ -151,16 +157,16 @@ export function DashboardScreen() {
             start={{ x: 0, y: 0 }}
             style={styles.heroInner}
           >
-            <AppText variant="kicker">Relatório IA</AppText>
+            <AppText variant="kicker">{t('dashboard.grimoireKicker')}</AppText>
             <AppText variant="title" style={styles.heroTitle}>
-              Grimório Pessoal: Relatório Cabalístico IA
+              {t('dashboard.grimoireTitle')}
             </AppText>
             <AppText variant="body" style={styles.heroCopy}>
-              Quatro capítulos selados em PDF. A prosa é do Mestre; os números saem só dos motores.
+              {t('dashboard.grimoireCopy')}
             </AppText>
             <View style={styles.heroCta}>
               <AppText variant="caption" style={styles.heroCtaText}>
-                Abrir grimório
+                {t('dashboard.grimoireCta')}
               </AppText>
             </View>
           </LinearGradient>
@@ -178,16 +184,16 @@ export function DashboardScreen() {
             start={{ x: 0, y: 0 }}
             style={styles.heroInner}
           >
-            <AppText variant="kicker">Supremo</AppText>
+            <AppText variant="kicker">{t('dashboard.forgeKicker')}</AppText>
             <AppText variant="title" style={styles.heroTitle}>
-              A Forja: Gerador de Marcas e Bebês
+              {t('dashboard.forgeTitle')}
             </AppText>
             <AppText variant="body" style={styles.heroCopy}>
-              Permute palavras, descarte bloqueios 111–999 e receba os cinco Nomes de Ouro.
+              {t('dashboard.forgeCopy')}
             </AppText>
             <View style={styles.heroCta}>
               <AppText variant="caption" style={styles.heroCtaText}>
-                Entrar na forja
+                {t('dashboard.forgeCta')}
               </AppText>
             </View>
           </LinearGradient>
@@ -206,17 +212,17 @@ export function DashboardScreen() {
             style={styles.heroInner}
           >
             <AppText variant="kicker" style={styles.heroKicker}>
-              Laboratório Cabalístico
+              {t('dashboard.labKicker')}
             </AppText>
             <AppText variant="title" style={styles.heroTitle}>
-              Analisar e Retificar Assinatura
+              {t('dashboard.labTitle')}
             </AppText>
             <AppText variant="body" style={styles.heroCopy}>
-              Descubra bloqueios no Triângulo da Vida e receba firmas harmônicas com o seu Destino.
+              {t('dashboard.labCopy')}
             </AppText>
             <View style={styles.heroCta}>
               <AppText variant="caption" style={styles.heroCtaText}>
-                Entrar no laboratório
+                {t('dashboard.labCta')}
               </AppText>
             </View>
           </LinearGradient>
@@ -225,7 +231,7 @@ export function DashboardScreen() {
 
       <Animated.View entering={FadeIn.duration(500).delay(640)}>
         <GoldButton
-          label="Recalcular nascimento"
+          label={t('dashboard.recalculate')}
           onPress={() => {
             clearProfile();
             router.replace('/onboarding');
@@ -234,7 +240,7 @@ export function DashboardScreen() {
         />
         <GhostButton
           disabled={leaving}
-          label={leaving ? 'Saindo...' : 'Sair da conta'}
+          label={leaving ? t('dashboard.signingOut') : t('dashboard.signOut')}
           onPress={() => {
             void (async () => {
               setLeaveError(undefined);
@@ -253,7 +259,7 @@ export function DashboardScreen() {
         {__DEV__ ? (
           <GhostButton
             disabled={simulating}
-            label={isPremium ? 'Dev: simular modo Free' : 'Dev: simular compra Pro'}
+            label={isPremium ? t('dashboard.devFree') : t('dashboard.devPro')}
             onPress={() => {
               void (async () => {
                 setSimulating(true);
@@ -286,6 +292,11 @@ function firstName(fullName: string): string {
 
 const styles = StyleSheet.create({
   intro: { marginBottom: 8 },
+  introHeader: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
   hello: {
     marginTop: 8,
   },

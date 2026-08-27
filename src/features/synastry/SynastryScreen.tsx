@@ -2,6 +2,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
 import { Platform, Pressable, StyleSheet, View } from 'react-native';
 import { Redirect, useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import {
   calculateSynastry,
   extractLetters,
@@ -20,6 +22,7 @@ import { Screen } from '../../ui/Screen';
 import { CrossedTriangles } from './CrossedTriangles';
 
 export function SynastryScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const profile = useProfileStore((state) => state.profile);
   const isPremium = useIsPremium();
@@ -47,8 +50,8 @@ export function SynastryScreen() {
     const iso = brazilianDateToIso(partnerDate);
     const letters = extractLetters(trimmed);
     const nextNameError =
-      letters.length < 2 ? 'Informe o nome completo de registro da outra pessoa.' : undefined;
-    const nextDateError = iso === null ? 'Use o formato DD/MM/AAAA.' : undefined;
+      letters.length < 2 ? t('synastry.nameError') : undefined;
+    const nextDateError = iso === null ? t('synastry.dateError') : undefined;
 
     setNameError(nextNameError);
     setDateError(nextDateError);
@@ -73,16 +76,16 @@ export function SynastryScreen() {
         <Ionicons color={colors.goldSoft} name="close" size={22} />
       </Pressable>
 
-      <AppText variant="kicker">Oráculo da Aliança</AppText>
+      <AppText variant="kicker">{t('synastry.kicker')}</AppText>
       <AppText variant="display" style={styles.title}>
-        Sinastria de Nomes
+        {t('synastry.title')}
       </AppText>
       <AppText variant="body" style={styles.lead}>
-        A análise completa dos 99 Arcanos Cabalísticos cruza Destino e Triângulo da Vida de duas firmas — inclusive os compostos 79 a 99. O mapa de um revela o que o outro ainda não vê.
+        {t('synastry.lead')}
       </AppText>
 
       <View style={styles.youCard}>
-        <AppText variant="caption">Sua firma</AppText>
+        <AppText variant="caption">{t('synastry.yourSignature')}</AppText>
         <AppText variant="signature" style={styles.youName}>
           {profile.fullName}
         </AppText>
@@ -95,28 +98,28 @@ export function SynastryScreen() {
         <Field
           autoCapitalize="words"
           error={nameError}
-          label="Nome da outra pessoa"
+          label={t('synastry.partnerName')}
           onChangeText={(value) => {
             setPartnerName(value);
             setNameError(undefined);
           }}
-          placeholder="Nome completo de registro"
+          placeholder={t('synastry.partnerPlaceholder')}
           value={partnerName}
         />
         <Field
           error={dateError}
           keyboardType="number-pad"
-          label="Nascimento"
+          label={t('synastry.birth')}
           onChangeText={(value) => {
             setPartnerDate(maskBrazilianDate(value));
             setDateError(undefined);
           }}
-          placeholder="DD/MM/AAAA"
+          placeholder={t('synastry.datePlaceholder')}
           value={partnerDate}
         />
       </View>
 
-      <GoldButton label="Revelar a Aliança" onPress={onReveal} style={styles.reveal} />
+      <GoldButton label={t('synastry.reveal')} onPress={onReveal} style={styles.reveal} />
 
       {result !== null ? (
         <ResultPanel
@@ -140,17 +143,18 @@ function ResultPanel({
   locked: boolean;
   onUnlock: () => void;
 }) {
+  const { t } = useTranslation();
   const givenA = result.personA.normalizedName.split(/\s+/)[0] ?? result.personA.name;
   const givenB = result.personB.normalizedName.split(/\s+/)[0] ?? result.personB.name;
 
   return (
     <View style={styles.result}>
-      <AppText variant="kicker">Afinidade</AppText>
+      <AppText variant="kicker">{t('synastry.affinity')}</AppText>
       <AppText variant="number" style={styles.score}>
         {result.affinityScore}%
       </AppText>
       <AppText variant="caption" style={styles.harmony}>
-        Destinos {harmonyLabel(result.destinyHarmony.kind)}
+        {t('synastry.destinies', { kind: harmonyLabel(result.destinyHarmony.kind, t) })}
       </AppText>
 
       <View style={styles.seals}>
@@ -180,7 +184,7 @@ function ResultPanel({
 
           {result.sharedArcana.length > 0 ? (
             <View style={styles.arcanaBlock}>
-              <AppText variant="caption">99 Arcanos Cabalísticos em comum</AppText>
+              <AppText variant="caption">{t('synastry.sharedArcana')}</AppText>
               <AppText variant="body" style={styles.arcanaLine}>
                 {result.sharedArcana
                   .map((item) => `${item.arcanaId} · ${item.namePt}`)
@@ -189,22 +193,26 @@ function ResultPanel({
             </View>
           ) : (
             <View style={styles.arcanaBlock}>
-              <AppText variant="caption">99 Arcanos Cabalísticos em comum</AppText>
+              <AppText variant="caption">{t('synastry.sharedArcana')}</AppText>
               <AppText variant="body" style={styles.arcanaLine}>
-                Nenhum arcano se repete na escala 1–99 deste cruzamento.
+                {t('synastry.noSharedArcana')}
               </AppText>
             </View>
           )}
 
           {result.crossedBlockages.length > 0 ? (
             <View style={styles.arcanaBlock}>
-              <AppText variant="caption">Bloqueios cruzados</AppText>
+              <AppText variant="caption">{t('synastry.crossedBlockages')}</AppText>
               <AppText variant="body" style={styles.arcanaLine}>
                 {result.crossedBlockages
                   .map((item) => {
                     const from = item.from === 'A' ? givenA : givenB;
                     const onto = item.onto === 'A' ? givenA : givenB;
-                    return `${from} acende o ${item.digit} em ${onto}`;
+                    return t('synastry.crossedBlockageLine', {
+                      from,
+                      digit: item.digit,
+                      onto,
+                    });
                   })
                   .join('. ')}
                 .
@@ -212,16 +220,16 @@ function ResultPanel({
             </View>
           ) : (
             <View style={styles.arcanaBlock}>
-              <AppText variant="caption">Bloqueios cruzados</AppText>
+              <AppText variant="caption">{t('synastry.crossedBlockages')}</AppText>
               <AppText variant="body" style={styles.arcanaLine}>
-                Nenhum nome acende sequência de bloqueio no triângulo do outro.
+                {t('synastry.noCrossedBlockages')}
               </AppText>
             </View>
           )}
 
           {result.crossedArcana.length > 0 ? (
             <View style={styles.arcanaBlock}>
-              <AppText variant="caption">Arcanos cruzados (1–99)</AppText>
+              <AppText variant="caption">{t('synastry.crossedArcana')}</AppText>
               <AppText variant="body" style={styles.arcanaLine}>
                 {result.crossedArcana
                   .map((item) => `${item.arcanaId} · ${item.namePt}`)
@@ -235,9 +243,9 @@ function ResultPanel({
           <View style={styles.lockFooter}>
             <Ionicons color={colors.goldSoft} name="lock-closed" size={22} />
             <AppText variant="body" style={styles.lockCopy}>
-              O detalhamento kármico — triângulos, os 99 Arcanos Cabalísticos e a revelação completa — pertence ao Arcanum Pro.
+              {t('synastry.lockCopy')}
             </AppText>
-            <GoldButton label="Desbloquear a Leitura Kármica Completa" onPress={onUnlock} />
+            <GoldButton label={t('synastry.lockCta')} onPress={onUnlock} />
           </View>
         ) : null}
       </View>
@@ -246,23 +254,34 @@ function ResultPanel({
 }
 
 function SealChip({ seal }: { seal: AffinitySeal }) {
+  const { t } = useTranslation();
   return (
     <View style={styles.seal}>
       <AppText variant="caption" style={styles.sealText}>
-        {seal}
+        {t(sealKey(seal))}
       </AppText>
     </View>
   );
 }
 
-function harmonyLabel(kind: DestinyHarmonyKind): string {
+function sealKey(seal: AffinitySeal): string {
+  if (seal === 'Aliança de Ouro no Amor') {
+    return 'synastry.seals.goldAlliance';
+  }
+  if (seal === 'Sociedade Próspera') {
+    return 'synastry.seals.prosperousSociety';
+  }
+  return 'synastry.seals.karmicAdjustment';
+}
+
+function harmonyLabel(kind: DestinyHarmonyKind, t: TFunction): string {
   if (kind === 'harmonic') {
-    return 'afins';
+    return t('synastry.harmonic');
   }
   if (kind === 'challenging') {
-    return 'desafiadores';
+    return t('synastry.challenging');
   }
-  return 'neutros';
+  return t('synastry.neutral');
 }
 
 const styles = StyleSheet.create({

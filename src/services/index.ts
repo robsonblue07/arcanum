@@ -7,7 +7,11 @@ export {
   generateAiGrimoire,
   isOpenAiConfigured,
 } from './ai-report-service';
-export type { AiGrimoireResult, GrimoireChapter } from './ai-report-service';
+export type {
+  AiGrimoireResult,
+  GenerateAiGrimoireOptions,
+  GrimoireChapter,
+} from './ai-report-service';
 export type {
   Database,
   ProfileRow,

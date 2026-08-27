@@ -2,6 +2,7 @@ import 'react-native-gesture-handler';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect, useState } from 'react';
+import { hydrateStoredLanguage } from '../src/lib/i18n';
 import { colors } from '../src/theme';
 import { useAppFonts } from '../src/theme/use-app-fonts';
 import { useAuthBootstrap } from '../src/store/use-auth-bootstrap';
@@ -20,6 +21,10 @@ export default function RootLayout() {
   const fontsLoaded = useAppFonts();
   const [fontsTimedOut, setFontsTimedOut] = useState(false);
   useAuthBootstrap();
+
+  useEffect(() => {
+    void hydrateStoredLanguage();
+  }, []);
 
   useEffect(() => {
     if (fontsLoaded) {

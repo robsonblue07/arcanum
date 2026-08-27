@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Redirect, useRouter, type Href } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import {
   generateGoldenNames,
   type ForgeKind,
@@ -19,6 +20,7 @@ const RITUAL_MS = 820;
 const MAX_WORDS = 5;
 
 export function ForgeScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const profile = useProfileStore((state) => state.profile);
   const isPremium = useIsPremium();
@@ -50,14 +52,14 @@ export function ForgeScreen() {
 
     const baseWords = words.map((item) => item.trim()).filter((item) => item.length > 0);
     if (baseWords.length === 0) {
-      setWordError('Informe ao menos uma palavra-chave.');
+      setWordError(t('forge.needWord'));
       setResults(null);
       return;
     }
 
     const destiny = parseOptionalDestiny(destinyInput);
     if (destinyInput.trim().length > 0 && destiny === undefined) {
-      setDestinyError('Use 1–9, ou os mestres 11, 22, 33.');
+      setDestinyError(t('forge.destinyError'));
       return;
     }
 
@@ -74,7 +76,7 @@ export function ForgeScreen() {
             : generateGoldenNames({ type: kind, baseWords, targetDestiny: destiny });
         setResults(forged);
       } catch (caught) {
-        setWordError(caught instanceof Error ? caught.message : 'Não foi possível forjar.');
+        setWordError(caught instanceof Error ? caught.message : t('forge.forgeFail'));
         setResults(null);
       } finally {
         setForging(false);
@@ -88,19 +90,18 @@ export function ForgeScreen() {
         <Ionicons color={colors.goldSoft} name="close" size={22} />
       </Pressable>
 
-      <AppText variant="kicker">A Forja Cabalística</AppText>
+      <AppText variant="kicker">{t('forge.kicker')}</AppText>
       <AppText variant="display" style={styles.title}>
-        Gerador de Marcas e Bebês
+        {t('forge.title')}
       </AppText>
       <AppText variant="body" style={styles.lead}>
-        O motor permuta palavras e partículas, calcula o Triângulo da Vida e descarta na hora
-        qualquer nome com bloqueio 111–999. Só o ouro sobrevive.
+        {t('forge.lead')}
       </AppText>
 
       <View style={styles.segment}>
         <Segment
           active={kind === 'business'}
-          label="Arcanum Business"
+          label={t('forge.business')}
           onPress={() => {
             setKind('business');
             setResults(null);
@@ -108,7 +109,7 @@ export function ForgeScreen() {
         />
         <Segment
           active={kind === 'baby'}
-          label="Arcanum Baby"
+          label={t('forge.baby')}
           onPress={() => {
             setKind('baby');
             setResults(null);
@@ -116,7 +117,7 @@ export function ForgeScreen() {
         />
       </View>
       <AppText variant="caption" style={styles.segmentHint}>
-        {kind === 'business' ? 'Empresas e marcas' : 'Bebês e nomes de registro'}
+        {kind === 'business' ? t('forge.businessHint') : t('forge.babyHint')}
       </AppText>
 
       <View style={styles.fields}>
@@ -125,12 +126,16 @@ export function ForgeScreen() {
             key={`word-${index}`}
             autoCapitalize="words"
             error={index === 0 ? wordError : undefined}
-            label={kind === 'business' ? `Palavra ${index + 1}` : `Nome ${index + 1}`}
+            label={
+              kind === 'business'
+                ? t('forge.wordLabel', { index: index + 1 })
+                : t('forge.nameLabel', { index: index + 1 })
+            }
             onChangeText={(value) => {
               setWords((current) => current.map((item, i) => (i === index ? value : item)));
               setWordError(undefined);
             }}
-            placeholder={kind === 'business' ? 'Ex: Luz, Sol, Ouro' : 'Ex: Maria, Silva, Costa'}
+            placeholder={kind === 'business' ? t('forge.wordPlaceholder') : t('forge.namePlaceholder')}
             value={word}
           />
         ))}
@@ -141,25 +146,25 @@ export function ForgeScreen() {
             }}
             style={styles.addWord}
           >
-            <AppText variant="caption">Adicionar palavra</AppText>
+            <AppText variant="caption">{t('forge.addWord')}</AppText>
           </Pressable>
         ) : null}
         <Field
           error={destinyError}
           keyboardType="number-pad"
-          label="Destino-alvo (opcional)"
+          label={t('forge.targetDestiny')}
           onChangeText={(value) => {
             setDestinyInput(value.replace(/\D/g, '').slice(0, 2));
             setDestinyError(undefined);
           }}
-          placeholder="1–9, 11, 22 ou 33"
+          placeholder={t('forge.destinyPlaceholder')}
           value={destinyInput}
         />
       </View>
 
       <GoldButton
         disabled={forging}
-        label="Forjar Nomes de Ouro"
+        label={t('forge.cta')}
         loading={forging}
         onPress={onForge}
         style={styles.forge}
@@ -168,17 +173,17 @@ export function ForgeScreen() {
       {forging ? (
         <View style={styles.ritual}>
           <AppText variant="body" style={styles.ritualText}>
-            A forja aquece. Permutações, partículas, triângulos — o ferro impuro cai.
+            {t('forge.ritual')}
           </AppText>
         </View>
       ) : null}
 
       {results !== null && !forging ? (
         <View style={styles.results}>
-          <AppText variant="kicker">Nomes de ouro</AppText>
+          <AppText variant="kicker">{t('forge.resultsKicker')}</AppText>
           {results.length === 0 ? (
             <AppText variant="body" style={styles.empty}>
-              Nenhuma combinação sobreviveu ao filtro de bloqueios. Troque uma palavra e forje de novo.
+              {t('forge.empty')}
             </AppText>
           ) : (
             results.map((item) => (
@@ -188,16 +193,16 @@ export function ForgeScreen() {
                     {item.name}
                   </AppText>
                   <View style={styles.apexSeal}>
-                    <AppText variant="caption">Ápice</AppText>
+                    <AppText variant="caption">{t('common.apex')}</AppText>
                     <AppText variant="number" style={styles.apexValue}>
                       {item.apex}
                     </AppText>
                   </View>
                 </View>
                 <AppText variant="caption" style={styles.cardMeta}>
-                  {item.isHarmonicWithDestiny ? 'Harmonia de ouro' : 'Livre de bloqueios'}
+                  {item.isHarmonicWithDestiny ? t('forge.harmonyGold') : t('forge.freeOfBlockages')}
                   {item.apex === 8 || item.apex === 3 || item.apex === 9
-                    ? ' · expansão 8 · 3 · 9'
+                    ? t('forge.expansion')
                     : ''}
                 </AppText>
               </View>

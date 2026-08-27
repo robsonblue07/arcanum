@@ -3,6 +3,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Redirect, useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { insertTrainedSignature, isSupabaseConfigured } from '../../services';
 import { toUserError } from '../../lib/to-user-error';
 import { useAuthStore } from '../../store/auth-store';
@@ -17,6 +18,7 @@ import { shareSignaturePng } from './export-signature';
 import { SignaturePad, type SignaturePadHandle } from './SignaturePad';
 
 export function TrainingScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const signature = useTrainingStore((state) => state.signature);
   const clearTraining = useTrainingStore((state) => state.clearTraining);
@@ -59,12 +61,12 @@ export function TrainingScreen() {
     }
 
     if (!isSupabaseConfigured()) {
-      return 'Treino registrado neste aparelho. Configure o Supabase para sincronizar.';
+      return t('train.localOnly');
     }
 
     const userId = session?.user.id;
     if (userId === undefined) {
-      return 'Entre na sua conta para guardar o treino na nuvem.';
+      return t('train.needAccount');
     }
 
     await insertTrainedSignature({
@@ -73,7 +75,7 @@ export function TrainingScreen() {
     });
     persistedRef.current = true;
     return undefined;
-  }, [session, signature]);
+  }, [session, signature, t]);
 
   if (signature === null) {
     return <Redirect href="/(tabs)/signature-lab" />;
@@ -85,7 +87,7 @@ export function TrainingScreen() {
 
   const onFinish = async () => {
     if (strokeCount === 0) {
-      setHint({ text: 'Trace a firma sobre a linha guia antes de concluir.', tone: 'danger' });
+      setHint({ text: t('train.traceBeforeFinish'), tone: 'danger' });
       return;
     }
 
@@ -106,7 +108,7 @@ export function TrainingScreen() {
 
   const onSaveImage = async () => {
     if (strokeCount === 0) {
-      setHint({ text: 'Trace a firma sobre a linha guia antes de salvar.', tone: 'danger' });
+      setHint({ text: t('train.traceBeforeSave'), tone: 'danger' });
       return;
     }
 
@@ -115,24 +117,24 @@ export function TrainingScreen() {
     try {
       const uri = await padRef.current?.capturePng();
       if (uri === undefined) {
-        throw new Error('Não foi possível capturar a firma. Tente novamente.');
+        throw new Error(t('train.captureError'));
       }
       await shareSignaturePng(uri);
       try {
         const warning = await persistSignature();
         setHint({
-          text: warning ?? 'Imagem pronta. Use a galeria, o WhatsApp ou o e-mail.',
+          text: warning ?? t('train.imageReady'),
           tone: warning === undefined ? 'success' : 'danger',
         });
       } catch {
         setHint({
-          text: 'Imagem exportada. Não foi possível sincronizar o treino na nuvem.',
+          text: t('train.exportCloudFail'),
           tone: 'danger',
         });
       }
     } catch (caught) {
       setHint({
-        text: caught instanceof Error ? caught.message : 'Não foi possível exportar a firma.',
+        text: caught instanceof Error ? caught.message : t('train.exportFail'),
         tone: 'danger',
       });
     } finally {
@@ -147,12 +149,12 @@ export function TrainingScreen() {
           <Ionicons color={colors.goldSoft} name="close" size={22} />
         </Pressable>
         <View style={styles.headerCopy}>
-          <AppText variant="kicker">Ateliê de traçado</AppText>
+          <AppText variant="kicker">{t('train.kicker')}</AppText>
           <AppText variant="signature" style={styles.model}>
             {signature}
           </AppText>
           <AppText variant="body" style={styles.rule}>
-            A firma próspera nunca desce. Siga a linha guia ascendente (12°).
+            {t('train.rule')}
           </AppText>
         </View>
       </View>
@@ -174,7 +176,7 @@ export function TrainingScreen() {
       <View style={styles.footer}>
         <View style={styles.footerRow}>
           <GhostButton
-            label="Limpar / Refazer"
+            label={t('train.clear')}
             onPress={() => {
               setClearSignal((value) => value + 1);
               persistedRef.current = false;
@@ -184,7 +186,7 @@ export function TrainingScreen() {
           />
           <GoldButton
             disabled={saving}
-            label="Concluir Treino"
+            label={t('train.finish')}
             loading={finishing}
             onPress={() => {
               void onFinish();
@@ -194,7 +196,7 @@ export function TrainingScreen() {
         </View>
         <GoldButton
           disabled={finishing}
-          label="Salvar Imagem"
+          label={t('train.saveImage')}
           loading={saving}
           onPress={() => {
             void onSaveImage();
@@ -206,12 +208,12 @@ export function TrainingScreen() {
       {completed ? (
         <View style={styles.success}>
           <LinearGradient colors={['rgba(7,4,15,0.92)', 'rgba(26,15,46,0.94)']} style={styles.successCard}>
-            <AppText variant="kicker">Frequência alinhada</AppText>
+            <AppText variant="kicker">{t('train.successKicker')}</AppText>
             <AppText variant="title" style={styles.successTitle}>
-              Você agora vibra na nova firma.
+              {t('train.successTitle')}
             </AppText>
             <AppText variant="body">
-              Cada traço ascendente reforça o Destino. O ateliê se encerra em instantes.
+              {t('train.successBody')}
             </AppText>
           </LinearGradient>
         </View>

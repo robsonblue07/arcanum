@@ -1,4 +1,8 @@
 import { parseBirthDate } from '../domain/numerology';
+import type { AppLanguage } from './i18n';
+import en from '../locales/en.json';
+import es from '../locales/es.json';
+import pt from '../locales/pt.json';
 
 const DIGITS_ONLY = /\D/g;
 
@@ -38,26 +42,24 @@ export function formatDisplayDate(iso: string): string {
   return isoToBrazilianDate(iso);
 }
 
-const MONTHS_PT = [
-  'janeiro',
-  'fevereiro',
-  'março',
-  'abril',
-  'maio',
-  'junho',
-  'julho',
-  'agosto',
-  'setembro',
-  'outubro',
-  'novembro',
-  'dezembro',
-] as const;
+const MONTHS: Record<AppLanguage, readonly string[]> = {
+  'pt-BR': pt.common.months,
+  'en-US': en.common.months,
+  'es-ES': es.common.months,
+};
 
 export function formatLongBrazilianDate(iso: string): string {
+  return formatLongLocalizedDate(iso, 'pt-BR');
+}
+
+export function formatLongLocalizedDate(iso: string, language: AppLanguage): string {
   const parsed = parseBirthDate(iso);
-  const monthName = MONTHS_PT[parsed.month - 1];
+  const monthName = MONTHS[language][parsed.month - 1];
   if (monthName === undefined) {
     return isoToBrazilianDate(iso);
+  }
+  if (language === 'en-US') {
+    return `${monthName} ${parsed.day}, ${parsed.year}`;
   }
   return `${parsed.day} de ${monthName} de ${parsed.year}`;
 }

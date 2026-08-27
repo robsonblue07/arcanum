@@ -2,7 +2,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Redirect, useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import type { CanonicalReportPayload } from '../../domain/numerology';
+import { getActiveLanguage } from '../../lib/i18n';
 import { generateGrimoirePdf, shareGrimoirePdf } from '../../lib/pdf-generator';
 import { toUserError } from '../../lib/to-user-error';
 import {
@@ -18,16 +20,17 @@ import { AppText } from '../../ui/AppText';
 import { GoldButton } from '../../ui/GoldButton';
 import { Screen } from '../../ui/Screen';
 
-const TRANSMUTATION = [
-  'Abrindo o grimório no véu da meia-luz…',
-  'Varredura dos 99 Arcanos no Triângulo da Vida…',
-  'O Mestre lê o Destino sem inventar um só número…',
-  'Rompimento dos selos 111 a 999…',
-  'A nova firma próspera é escrita em ouro…',
-  'Selando o PDF com a geometria do Arcanum…',
+const TRANSMUTATION_KEYS = [
+  'aiReport.transmutation.0',
+  'aiReport.transmutation.1',
+  'aiReport.transmutation.2',
+  'aiReport.transmutation.3',
+  'aiReport.transmutation.4',
+  'aiReport.transmutation.5',
 ] as const;
 
 export function AiReportScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const profile = useProfileStore((state) => state.profile);
   const isPremium = useIsPremium();
@@ -55,7 +58,7 @@ export function AiReportScreen() {
     }
     const tick = setInterval(() => {
       setProgress((current) => Math.min(92, current + 4));
-      setPhraseIndex((current) => (current + 1) % TRANSMUTATION.length);
+      setPhraseIndex((current) => (current + 1) % TRANSMUTATION_KEYS.length);
     }, 900);
     return () => {
       clearInterval(tick);
@@ -82,12 +85,16 @@ export function AiReportScreen() {
     setChapters(null);
     setPdfUri(null);
     try {
-      const grimoire = await generateAiGrimoire({
-        fullName: profile.fullName,
-        birthDate: profile.birthDate,
-      });
+      const language = getActiveLanguage();
+      const grimoire = await generateAiGrimoire(
+        {
+          fullName: profile.fullName,
+          birthDate: profile.birthDate,
+        },
+        { language },
+      );
       setProgress(88);
-      const printed = await generateGrimoirePdf(grimoire.payload, grimoire.chapters);
+      const printed = await generateGrimoirePdf(grimoire.payload, grimoire.chapters, language);
       setChapters(grimoire.chapters);
       setPdfUri(printed.uri);
       setProgress(100);
@@ -106,32 +113,47 @@ export function AiReportScreen() {
         <Ionicons color={colors.goldSoft} name="close" size={22} />
       </Pressable>
 
-      <AppText variant="kicker">Grimório Pessoal</AppText>
+      <AppText variant="kicker">{t('aiReport.kicker')}</AppText>
       <AppText variant="display" style={styles.title}>
-        Relatório Cabalístico IA
+        {t('aiReport.title')}
       </AppText>
       <AppText variant="body" style={styles.lead}>
-        A prosa é do Mestre. Os números — Destino {payload.triad.destiny}, Missão{' '}
-        {payload.triad.mission}, ápice {payload.triad.apex} — vêm só dos motores do Arcanum.
+        {t('aiReport.lead', {
+          destiny: payload.triad.destiny,
+          mission: payload.triad.mission,
+          apex: payload.triad.apex,
+        })}
       </AppText>
 
       <View style={styles.summary}>
-        <AppText variant="caption">Sumário canônico</AppText>
+        <AppText variant="caption">{t('aiReport.canonicalSummary')}</AppText>
         <AppText variant="body" style={styles.summaryLine}>
-          {payload.person.fullName} · {payload.person.birthDate}
+          {t('aiReport.personLine', {
+            name: payload.person.fullName,
+            birthDate: payload.person.birthDate,
+          })}
         </AppText>
         <AppText variant="body" style={styles.summaryLine}>
-          Firma atual {payload.originalSignature.signature}
           {payload.pyramid.blockageCodes.length > 0
-            ? ` · bloqueios ${payload.pyramid.blockageCodes.join(', ')}`
-            : ' · sem sequência 111–999'}
+            ? t('aiReport.originalBlocked', {
+                signature: payload.originalSignature.signature,
+                codes: payload.pyramid.blockageCodes.join(', '),
+              })
+            : t('aiReport.originalClean', {
+                signature: payload.originalSignature.signature,
+              })}
         </AppText>
         <AppText variant="body" style={styles.summaryLine}>
-          Firma retificada {payload.rectifiedSignature.signature} · ápice{' '}
-          {payload.rectifiedSignature.apex}
+          {t('aiReport.rectified', {
+            signature: payload.rectifiedSignature.signature,
+            apex: payload.rectifiedSignature.apex,
+          })}
         </AppText>
         <AppText variant="body" style={styles.summaryLine}>
-          Dia Pessoal {payload.oracle.personalDay} — {payload.oracle.title}
+          {t('aiReport.oracleLine', {
+            day: payload.oracle.personalDay,
+            title: payload.oracle.title,
+          })}
         </AppText>
       </View>
 
@@ -139,11 +161,10 @@ export function AiReportScreen() {
         <View style={styles.lockFooter}>
           <Ionicons color={colors.goldSoft} name="lock-closed" size={22} />
           <AppText variant="body" style={styles.lockCopy}>
-            O grimório completo em PDF — quatro capítulos e o selo de conclusão — pertence ao
-            Arcanum Pro.
+            {t('aiReport.lockCopy')}
           </AppText>
           <GoldButton
-            label="Desbloquear o Grimório"
+            label={t('aiReport.lockCta')}
             onPress={() => {
               router.push('/paywall');
             }}
@@ -153,13 +174,13 @@ export function AiReportScreen() {
         <>
           {!isOpenAiConfigured() ? (
             <AppText variant="body" style={styles.warn}>
-              Configure EXPO_PUBLIC_OPENAI_API_KEY no .env para o Mestre escrever a prosa.
+              {t('aiReport.missingKey')}
             </AppText>
           ) : null}
 
           <GoldButton
             disabled={compiling}
-            label="Compilar Meu Grimório em PDF"
+            label={t('aiReport.compile')}
             loading={compiling}
             onPress={() => {
               void compile();
@@ -175,7 +196,7 @@ export function AiReportScreen() {
             <View style={[styles.fill, { width: `${progress}%` }]} />
           </View>
           <AppText variant="body" style={styles.phrase}>
-            {TRANSMUTATION[phraseIndex] ?? TRANSMUTATION[0]}
+            {t(TRANSMUTATION_KEYS[phraseIndex] ?? TRANSMUTATION_KEYS[0])}
           </AppText>
         </View>
       ) : null}
@@ -188,10 +209,10 @@ export function AiReportScreen() {
 
       {chapters !== null ? (
         <View style={styles.preview}>
-          <AppText variant="kicker">Pré-visualização</AppText>
+          <AppText variant="kicker">{t('aiReport.preview')}</AppText>
           {chapters.map((chapter) => (
             <View key={chapter.number} style={styles.previewCard}>
-              <AppText variant="caption">Capítulo {chapter.number}</AppText>
+              <AppText variant="caption">{t('aiReport.chapter', { number: chapter.number })}</AppText>
               <AppText variant="title" style={styles.previewTitle}>
                 {chapter.title}
               </AppText>
@@ -204,10 +225,10 @@ export function AiReportScreen() {
             disabled={sharing}
             label={
               sharing
-                ? 'Abrindo compartilhamento...'
+                ? t('aiReport.sharing')
                 : pdfUri === null
-                  ? 'Imprimir / salvar PDF de novo'
-                  : 'Baixar / Compartilhar PDF'
+                  ? t('aiReport.reprint')
+                  : t('aiReport.download')
             }
             onPress={() => {
               void (async () => {
@@ -215,7 +236,7 @@ export function AiReportScreen() {
                 setError(undefined);
                 try {
                   if (pdfUri !== null) {
-                    await shareGrimoirePdf(pdfUri);
+                    await shareGrimoirePdf(pdfUri, getActiveLanguage());
                     return;
                   }
                   await generateGrimoirePdf(payload, chapters);

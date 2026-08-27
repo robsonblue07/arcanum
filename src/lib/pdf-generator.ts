@@ -3,6 +3,7 @@ import * as Sharing from 'expo-sharing';
 import { Platform } from 'react-native';
 import type { CanonicalReportPayload } from '../domain/numerology';
 import type { GrimoireChapter } from '../services/ai-report-service';
+import i18n, { getActiveLanguage, type AppLanguage } from './i18n';
 
 const GOLD = '#D4AF37';
 const GOLD_SOFT = '#F0D78C';
@@ -15,26 +16,40 @@ export interface GrimoirePdfResult {
   readonly usedPrintDialog: boolean;
 }
 
+function tLang(language: AppLanguage, key: string, vars?: Record<string, string | number>): string {
+  const translate = i18n.getFixedT(language);
+  if (vars === undefined) {
+    return String(translate(key));
+  }
+  return String(translate(key, vars));
+}
+
 export function renderGrimoireHtml(
   payload: CanonicalReportPayload,
   chapters: readonly GrimoireChapter[],
+  language: AppLanguage = getActiveLanguage(),
 ): string {
   const chapterHtml = chapters
     .map(
       (chapter) => `
         <section class="chapter">
-          <p class="kicker">Capítulo ${chapter.number}</p>
+          <p class="kicker">${escapeHtml(tLang(language, 'grimoire.pdf.chapter', { number: chapter.number }))}</p>
           <h2>${escapeHtml(chapter.title)}</h2>
           ${paragraphsToHtml(chapter.body)}
         </section>`,
     )
     .join('');
 
+  const blockageCodes =
+    payload.pyramid.blockageCodes.length > 0
+      ? payload.pyramid.blockageCodes.join(', ')
+      : tLang(language, 'grimoire.pdf.noBlockages');
+
   return `<!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="${language}">
   <head>
     <meta charset="utf-8" />
-    <title>Grimório Cabalístico — ${escapeHtml(payload.person.fullName)}</title>
+    <title>${escapeHtml(tLang(language, 'grimoire.pdf.htmlTitle', { name: payload.person.fullName }))}</title>
     <style>
       @page { margin: 22mm 16mm 28mm; }
       * { box-sizing: border-box; }
@@ -127,25 +142,38 @@ export function renderGrimoireHtml(
   </head>
   <body>
     <header class="mast">
-      <p class="brand">Arcanum · Grimório Cabalístico</p>
+      <p class="brand">${escapeHtml(tLang(language, 'grimoire.pdf.brand'))}</p>
       <h1>${escapeHtml(payload.person.fullName)}</h1>
-      <p class="meta">Nascimento ${escapeHtml(payload.person.birthDate)} · Documento gerado pelos motores oficiais</p>
+      <p class="meta">${escapeHtml(tLang(language, 'grimoire.pdf.birth', { date: payload.person.birthDate }))}</p>
     </header>
     <div class="seals">
-      ${sealHtml('Destino', payload.triad.destiny)}
-      ${sealHtml('Missão', payload.triad.mission)}
-      ${sealHtml('Ápice', payload.triad.apex)}
+      ${sealHtml(tLang(language, 'common.destiny'), payload.triad.destiny)}
+      ${sealHtml(tLang(language, 'common.mission'), payload.triad.mission)}
+      ${sealHtml(tLang(language, 'common.apex'), payload.triad.apex)}
     </div>
     <p class="canon">
-      Firma atual: ${escapeHtml(payload.originalSignature.signature)}
-      (bloqueios ${escapeHtml(payload.pyramid.blockageCodes.join(', ') || 'nenhum')}).
-      Firma retificada: ${escapeHtml(payload.rectifiedSignature.signature)},
-      ápice ${payload.rectifiedSignature.apex}.
-      Dia Pessoal ${payload.oracle.personalDay} — ${escapeHtml(payload.oracle.title)}.
+      ${escapeHtml(
+        tLang(language, 'grimoire.pdf.currentSignature', {
+          signature: payload.originalSignature.signature,
+          codes: blockageCodes,
+        }),
+      )}
+      ${escapeHtml(
+        tLang(language, 'grimoire.pdf.rectified', {
+          signature: payload.rectifiedSignature.signature,
+          apex: payload.rectifiedSignature.apex,
+        }),
+      )}
+      ${escapeHtml(
+        tLang(language, 'grimoire.pdf.oracle', {
+          day: payload.oracle.personalDay,
+          title: payload.oracle.title,
+        }),
+      )}
     </p>
     ${chapterHtml}
     <footer class="mast">
-      Arcanum · os números deste grimório não foram inventados pela IA · selo oficial
+      ${escapeHtml(tLang(language, 'grimoire.pdf.footer'))}
     </footer>
   </body>
 </html>`;
@@ -175,8 +203,9 @@ function escapeHtml(value: string): string {
 export async function generateGrimoirePdf(
   payload: CanonicalReportPayload,
   chapters: readonly GrimoireChapter[],
+  language: AppLanguage = getActiveLanguage(),
 ): Promise<GrimoirePdfResult> {
-  const html = renderGrimoireHtml(payload, chapters);
+  const html = renderGrimoireHtml(payload, chapters, language);
 
   if (Platform.OS === 'web') {
     await Print.printAsync({ html });
@@ -187,13 +216,16 @@ export async function generateGrimoirePdf(
   return { uri: printed.uri, usedPrintDialog: false };
 }
 
-export async function shareGrimoirePdf(uri: string): Promise<void> {
+export async function shareGrimoirePdf(
+  uri: string,
+  language: AppLanguage = getActiveLanguage(),
+): Promise<void> {
   if (!(await Sharing.isAvailableAsync())) {
-    throw new Error('O compartilhamento nativo não está disponível neste aparelho.');
+    throw new Error(tLang(language, 'grimoire.pdf.shareUnavailable'));
   }
   await Sharing.shareAsync(uri, {
     mimeType: 'application/pdf',
     UTI: 'com.adobe.pdf',
-    dialogTitle: 'Compartilhar Grimório Cabalístico',
+    dialogTitle: tLang(language, 'grimoire.pdf.shareTitle'),
   });
 }

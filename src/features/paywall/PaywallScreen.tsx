@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { toUserError } from '../../lib/to-user-error';
 import { setPremiumUnlocked } from '../../store/premium';
 import { colors, fonts, radii } from '../../theme';
@@ -12,16 +13,10 @@ import { Screen } from '../../ui/Screen';
 
 type PlanId = 'lifetime' | 'monthly';
 
-const FORGE_CTA =
-  'Desbloqueie a Forja para criar Marcas e Nomes blindados contra bloqueios financeiros';
-
-const BENEFITS = [
-  'Liberação de todas as assinaturas harmônicas',
-  'Ateliê de treino guiado ilimitado',
-  'Exportação de firmas em PNG transparente',
-] as const;
+const BENEFIT_KEYS = ['paywall.benefit1', 'paywall.benefit2', 'paywall.benefit3'] as const;
 
 export function PaywallScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const params = useLocalSearchParams<{ intent?: string | string[] }>();
   const fromForge = firstParam(params.intent) === 'forge';
@@ -56,23 +51,21 @@ export function PaywallScreen() {
       </Pressable>
 
       <AppText variant="kicker" style={styles.kicker}>
-        Arcanum Pro
+        {t('paywall.kicker')}
       </AppText>
       <AppText variant="display" style={styles.title}>
-        {fromForge ? 'A Forja Cabalística' : 'Liberte seu Destino Financeiro'}
+        {fromForge ? t('paywall.forgeTitle') : t('paywall.title')}
       </AppText>
       <AppText variant="body" style={styles.subtitle}>
-        {fromForge
-          ? FORGE_CTA
-          : 'A sua assinatura atual está travando sua prosperidade. Desbloqueie sua nova identidade.'}
+        {fromForge ? t('paywall.forgeCta') : t('paywall.subtitle')}
       </AppText>
 
       <View style={styles.benefits}>
-        {BENEFITS.map((item) => (
+        {BENEFIT_KEYS.map((item) => (
           <View key={item} style={styles.benefitRow}>
             <Ionicons color={colors.gold} name="checkmark-circle" size={20} />
             <AppText variant="body" style={styles.benefitText}>
-              {item}
+              {t(item)}
             </AppText>
           </View>
         ))}
@@ -83,19 +76,19 @@ export function PaywallScreen() {
         style={[styles.plan, plan === 'lifetime' ? styles.planSelected : null]}
       >
         <View style={styles.planHeader}>
-          <AppText variant="kicker">Recomendado</AppText>
+          <AppText variant="kicker">{t('paywall.recommended')}</AppText>
           {plan === 'lifetime' ? (
             <Ionicons color={colors.gold} name="sparkles" size={18} />
           ) : null}
         </View>
         <AppText variant="title" style={styles.planTitle}>
-          Acesso Vitalício
+          {t('paywall.lifetime')}
         </AppText>
         <AppText variant="number" style={styles.price}>
-          R$ 97,00
+          {t('paywall.priceLifetime')}
         </AppText>
         <AppText variant="caption" style={styles.planHint}>
-          Pagamento único
+          {t('paywall.lifetimeHint')}
         </AppText>
       </Pressable>
 
@@ -104,13 +97,13 @@ export function PaywallScreen() {
         style={[styles.plan, plan === 'monthly' ? styles.planSelected : null]}
       >
         <AppText variant="title" style={styles.planTitle}>
-          Membro Arcanum Pro
+          {t('paywall.monthly')}
         </AppText>
         <AppText variant="number" style={styles.price}>
-          R$ 29,90
+          {t('paywall.priceMonthly')}
         </AppText>
         <AppText variant="caption" style={styles.planHint}>
-          Por mês
+          {t('paywall.monthlyHint')}
         </AppText>
       </Pressable>
 
@@ -121,7 +114,7 @@ export function PaywallScreen() {
       ) : null}
 
       <GoldButton
-        label={fromForge ? FORGE_CTA : 'Garantir Minha Transformação Agora'}
+        label={fromForge ? t('paywall.forgeCta') : t('paywall.cta')}
         loading={loading}
         onPress={() => {
           void unlock();
@@ -131,7 +124,7 @@ export function PaywallScreen() {
 
       <GhostButton
         disabled={loading}
-        label="Restaurar Compras"
+        label={t('paywall.restore')}
         onPress={() => {
           void unlock();
         }}

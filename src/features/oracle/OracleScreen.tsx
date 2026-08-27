@@ -1,8 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Platform, Pressable, StyleSheet, View } from 'react-native';
 import { Redirect, useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { readDailyOracle } from '../../domain/numerology';
-import { formatLongBrazilianDate } from '../../lib/dates';
+import { formatLongLocalizedDate } from '../../lib/dates';
+import { getActiveLanguage } from '../../lib/i18n';
 import { useIsPremium } from '../../store/premium';
 import { useProfileStore } from '../../store/profile-store';
 import { colors, fonts, radii } from '../../theme';
@@ -12,6 +14,7 @@ import { NumberSeal } from '../../ui/NumberSeal';
 import { Screen } from '../../ui/Screen';
 
 export function OracleScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const profile = useProfileStore((state) => state.profile);
   const isPremium = useIsPremium();
@@ -37,16 +40,16 @@ export function OracleScreen() {
         <Ionicons color={colors.goldSoft} name="close" size={22} />
       </Pressable>
 
-      <AppText variant="kicker">Oráculo Diário</AppText>
+      <AppText variant="kicker">{t('oracle.kicker')}</AppText>
       <AppText variant="display" style={styles.title}>
-        Sua Energia Hoje
+        {t('oracle.title')}
       </AppText>
       <AppText variant="body" style={styles.date}>
-        {formatLongBrazilianDate(reading.cycles.calendarDate.iso)}
+        {formatLongLocalizedDate(reading.cycles.calendarDate.iso, getActiveLanguage())}
       </AppText>
 
       <View style={styles.sealWrap}>
-        <NumberSeal caption="Dia pessoal" size="lg" value={reading.entry.day} />
+        <NumberSeal caption={t('common.personalDay')} size="lg" value={reading.entry.day} />
       </View>
 
       <AppText variant="kicker" style={styles.entryKicker}>
@@ -61,19 +64,22 @@ export function OracleScreen() {
 
       <View pointerEvents={locked ? 'none' : 'auto'} style={locked ? styles.lockedInner : null}>
         <View style={styles.detailCard}>
-          <AppText variant="caption">Conselho do dia</AppText>
+          <AppText variant="caption">{t('oracle.counsel')}</AppText>
           <AppText variant="body" style={styles.counsel}>
             {reading.entry.counsel}
           </AppText>
         </View>
         <View style={[styles.detailCard, styles.avoidCard]}>
-          <AppText variant="caption">O que evitar</AppText>
+          <AppText variant="caption">{t('oracle.avoid')}</AppText>
           <AppText variant="body" style={styles.counsel}>
             {reading.entry.avoid}
           </AppText>
         </View>
         <AppText variant="caption" style={styles.cycleMeta}>
-          Ano pessoal {reading.cycles.personalYear} · Mês pessoal {reading.cycles.personalMonth}
+          {t('oracle.cycleMeta', {
+            year: reading.cycles.personalYear,
+            month: reading.cycles.personalMonth,
+          })}
         </AppText>
       </View>
 
@@ -81,10 +87,10 @@ export function OracleScreen() {
         <View style={styles.lockFooter}>
           <Ionicons color={colors.goldSoft} name="lock-closed" size={22} />
           <AppText variant="body" style={styles.lockCopy}>
-            O conselho completo e o que evitar neste Dia Pessoal pertencem ao Arcanum Pro.
+            {t('oracle.lockCopy')}
           </AppText>
           <GoldButton
-            label="Desbloquear o Oráculo Completo"
+            label={t('oracle.lockCta')}
             onPress={() => {
               router.push('/paywall');
             }}

@@ -7,6 +7,7 @@ import {
   type ReportProfileInput,
   type SynastryReportSummary,
 } from '../domain/numerology';
+import i18n, { getActiveLanguage, isAppLanguage, type AppLanguage } from '../lib/i18n';
 import { withTimeout } from '../lib/with-timeout';
 
 const OPENAI_URL = 'https://api.openai.com/v1/chat/completions';
@@ -24,6 +25,11 @@ export interface AiGrimoireResult {
   readonly chapters: readonly GrimoireChapter[];
 }
 
+export interface GenerateAiGrimoireOptions {
+  readonly synastrySummary?: SynastryReportSummary;
+  readonly language?: AppLanguage;
+}
+
 export function readOpenAiApiKey(): string {
   const key =
     process.env.EXPO_PUBLIC_OPENAI_API_KEY?.trim() ??
@@ -36,18 +42,6 @@ export function isOpenAiConfigured(): boolean {
   const key = readOpenAiApiKey();
   return key.startsWith('sk-') && key.length > 20;
 }
-
-const SYSTEM_PROMPT = [
-  'Você é o Mestre Cabalista do Arcanum: voz solene, refinada e transformadora, em português do Brasil.',
-  'Regra absoluta: você NUNCA inventa números. Destino, Missão, Alma, ápice, arcanos 1–99, códigos de bloqueio (111–999), Dia/Mês/Ano Pessoal e firmas já vêm calculados no JSON canônico.',
-  'Cite esses números exatamente como recebidos. Não calcule, não arredonde, não substitua, não invente arcanos nem sequências.',
-  'Sua tarefa é apenas a prosa interpretativa — o sentido oculto, o conselho e o selo ritual — em quatro capítulos.',
-  'Responda SOMENTE com JSON válido neste formato:',
-  '{"chapters":[{"number":1,"title":"...","body":"..."},{"number":2,"title":"...","body":"..."},{"number":3,"title":"...","body":"..."},{"number":4,"title":"...","body":"..."}]}',
-  'Use exatamente estes títulos, nesta ordem:',
-  ...GRIMOIRE_CHAPTERS.map((chapter) => `${chapter.number}. ${chapter.title}`),
-  'Cada body tem 3 a 5 parágrafos, tom de grimório, sem markdown, sem listas com asterisco.',
-].join('\n');
 
 export function assembleCanonicalReport(
   profile: ReportProfileInput,
@@ -63,24 +57,59 @@ export function assembleCanonicalReport(
 
 export async function generateAiGrimoire(
   profile: ReportProfileInput,
-  synastrySummary?: SynastryReportSummary,
+  options: GenerateAiGrimoireOptions = {},
 ): Promise<AiGrimoireResult> {
+  const language =
+    options.language !== undefined && isAppLanguage(options.language)
+      ? options.language
+      : getActiveLanguage();
   const payload =
-    synastrySummary === undefined
+    options.synastrySummary === undefined
       ? assembleCanonicalReport(profile)
-      : assembleCanonicalReport(profile, synastrySummary);
-  const chapters = await requestGrimoireChapters(payload);
+      : assembleCanonicalReport(profile, options.synastrySummary);
+  const chapters = await requestGrimoireChapters(payload, language);
   return { payload, chapters };
+}
+
+function tLang(language: AppLanguage, key: string, vars?: Record<string, string | number>): string {
+  const translate = i18n.getFixedT(language);
+  if (vars === undefined) {
+    return String(translate(key));
+  }
+  return String(translate(key, vars));
+}
+
+function chapterTitles(language: AppLanguage): readonly string[] {
+  return [
+    tLang(language, 'grimoire.chapters.1'),
+    tLang(language, 'grimoire.chapters.2'),
+    tLang(language, 'grimoire.chapters.3'),
+    tLang(language, 'grimoire.chapters.4'),
+  ];
+}
+
+function buildSystemPrompt(language: AppLanguage): string {
+  const titles = chapterTitles(language);
+  return [
+    tLang(language, 'grimoire.systemRole'),
+    tLang(language, 'grimoire.systemRuleNumbers'),
+    tLang(language, 'grimoire.systemRuleCite'),
+    tLang(language, 'grimoire.systemTask'),
+    tLang(language, 'grimoire.systemJsonFormat'),
+    tLang(language, 'grimoire.systemJsonShape'),
+    tLang(language, 'grimoire.systemUseTitles'),
+    ...titles.map((title, index) => `${index + 1}. ${title}`),
+    tLang(language, 'grimoire.systemBodyStyle'),
+  ].join('\n');
 }
 
 async function requestGrimoireChapters(
   payload: CanonicalReportPayload,
+  language: AppLanguage,
 ): Promise<GrimoireChapter[]> {
   const apiKey = readOpenAiApiKey();
   if (!isOpenAiConfigured()) {
-    throw new Error(
-      'A chave da OpenAI não está configurada. Defina EXPO_PUBLIC_OPENAI_API_KEY no arquivo .env.',
-    );
+    throw new Error(tLang(language, 'grimoire.errors.missingKey'));
   }
 
   const body = {
@@ -88,13 +117,10 @@ async function requestGrimoireChapters(
     temperature: 0.7,
     response_format: { type: 'json_object' },
     messages: [
-      { role: 'system', content: SYSTEM_PROMPT },
+      { role: 'system', content: buildSystemPrompt(language) },
       {
         role: 'user',
-        content: [
-          'Interprete o grimório a partir deste payload canônico. Os números são lei.',
-          JSON.stringify(payload),
-        ].join('\n'),
+        content: [tLang(language, 'grimoire.userPreamble'), JSON.stringify(payload)].join('\n'),
       },
     ],
   };
@@ -112,50 +138,50 @@ async function requestGrimoireChapters(
   );
 
   if (!response.ok) {
-    throw new Error(messageForOpenAiStatus(response.status));
+    throw new Error(messageForOpenAiStatus(response.status, language));
   }
 
   const json: unknown = await response.json();
-  const content = extractAssistantContent(json);
-  return parseChapters(content);
+  const content = extractAssistantContent(json, language);
+  return parseChapters(content, language);
 }
 
-function messageForOpenAiStatus(status: number): string {
+function messageForOpenAiStatus(status: number, language: AppLanguage): string {
   if (status === 401 || status === 403) {
-    return 'A chave da OpenAI foi recusada. Confira EXPO_PUBLIC_OPENAI_API_KEY.';
+    return tLang(language, 'grimoire.errors.rejectedKey');
   }
   if (status === 429) {
-    return 'O oráculo está sobrecarregado. Aguarde um momento e tente de novo.';
+    return tLang(language, 'grimoire.errors.overloaded');
   }
   if (status >= 500) {
-    return 'O serviço de interpretação está indisponível no momento.';
+    return tLang(language, 'grimoire.errors.unavailable');
   }
-  return 'Não foi possível compilar o grimório. Tente novamente.';
+  return tLang(language, 'grimoire.errors.compileFail');
 }
 
-function extractAssistantContent(json: unknown): string {
+function extractAssistantContent(json: unknown, language: AppLanguage): string {
   if (typeof json !== 'object' || json === null || !('choices' in json)) {
-    throw new Error('A resposta da OpenAI veio incompleta.');
+    throw new Error(tLang(language, 'grimoire.errors.incomplete'));
   }
   const choices = (json as { choices: unknown }).choices;
   if (!Array.isArray(choices) || choices[0] === undefined) {
-    throw new Error('A resposta da OpenAI veio vazia.');
+    throw new Error(tLang(language, 'grimoire.errors.empty'));
   }
   const first = choices[0] as { message?: { content?: unknown } };
   const content = first.message?.content;
   if (typeof content !== 'string' || content.trim().length === 0) {
-    throw new Error('A OpenAI não devolveu o texto dos capítulos.');
+    throw new Error(tLang(language, 'grimoire.errors.noText'));
   }
   return content;
 }
 
-function parseChapters(raw: string): GrimoireChapter[] {
+function parseChapters(raw: string, language: AppLanguage): GrimoireChapter[] {
   const jsonText = unwrapJson(raw);
   let parsed: unknown;
   try {
     parsed = JSON.parse(jsonText) as unknown;
   } catch {
-    throw new Error('Não foi possível ler os capítulos do grimório.');
+    throw new Error(tLang(language, 'grimoire.errors.parseFail'));
   }
 
   const list = Array.isArray(parsed)
@@ -165,18 +191,19 @@ function parseChapters(raw: string): GrimoireChapter[] {
       : null;
 
   if (!Array.isArray(list) || list.length !== GRIMOIRE_CHAPTERS.length) {
-    throw new Error('O grimório chegou com capítulos incompletos. Tente gerar de novo.');
+    throw new Error(tLang(language, 'grimoire.errors.incompleteChapters'));
   }
 
+  const titles = chapterTitles(language);
   return GRIMOIRE_CHAPTERS.map((expected, index) => {
     const item = list[index] as { number?: unknown; title?: unknown; body?: unknown };
     const body = typeof item.body === 'string' ? item.body.trim() : '';
     if (body.length < 80) {
-      throw new Error('Um dos capítulos veio vazio demais. Tente gerar de novo.');
+      throw new Error(tLang(language, 'grimoire.errors.shortChapter'));
     }
     return {
       number: expected.number,
-      title: expected.title,
+      title: titles[index] ?? expected.title,
       body,
     };
   });

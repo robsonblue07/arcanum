@@ -3,6 +3,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Redirect, useRouter } from 'expo-router';
 import { useMemo, useRef, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import {
   generateOptimizedSignatures,
   selectRectifiedSignature,
@@ -20,6 +21,7 @@ import { CriticalTriangle } from './CriticalTriangle';
 import { blockageImpactLine, reliefLine, sequenceCodes } from './report-copy';
 
 export function SignatureReportScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const profile = useProfileStore((state) => state.profile);
   const startTraining = useTrainingStore((state) => state.startTraining);
@@ -58,9 +60,9 @@ export function SignatureReportScreen() {
         requestAnimationFrame(() => resolve());
       });
       const uri = await captureViewPng(captureRef, 'arcanum-diagnostico', captureSize.current);
-      await sharePng(uri, 'Compartilhar meu diagnóstico Arcanum');
+      await sharePng(uri, t('report.shareDialog'));
     } catch (caught) {
-      setHint(caught instanceof Error ? caught.message : 'Não foi possível compartilhar o diagnóstico.');
+      setHint(caught instanceof Error ? caught.message : t('report.shareError'));
     } finally {
       setSharing(false);
     }
@@ -77,9 +79,9 @@ export function SignatureReportScreen() {
           <Ionicons color={colors.goldSoft} name="close" size={22} />
         </Pressable>
         <View style={styles.headerCopy}>
-          <AppText variant="kicker">Diagnóstico da firma</AppText>
+          <AppText variant="kicker">{t('report.kicker')}</AppText>
           <AppText variant="title" style={styles.headerTitle}>
-            Antes × Destino
+            {t('report.title')}
           </AppText>
         </View>
       </View>
@@ -97,22 +99,22 @@ export function SignatureReportScreen() {
             Arcanum
           </AppText>
           <AppText variant="caption" style={styles.brandSub}>
-            Relatório da firma
+            {t('report.brandSub')}
           </AppText>
 
           <View style={styles.problem}>
             <AppText variant="kicker" style={styles.problemKicker}>
-              O problema
+              {t('report.problem')}
             </AppText>
             <AppText variant="signature" style={styles.problemName}>
               {original.signature}
             </AppText>
             <View style={styles.metaRow}>
-              <MetaChip danger label={`Ápice ${original.triangle.apex}`} />
+              <MetaChip danger label={t('report.apex', { value: original.triangle.apex })} />
               {originalCodes.length > 0 ? (
                 originalCodes.map((code) => <MetaChip danger key={code} label={code} />)
               ) : (
-                <MetaChip danger={false} label="Sem sequência 3+" />
+                <MetaChip danger={false} label={t('report.noSequence')} />
               )}
             </View>
             <CriticalTriangle
@@ -121,7 +123,7 @@ export function SignatureReportScreen() {
               triangle={original.triangle}
             />
             <AppText variant="body" style={styles.impact}>
-              {blockageImpactLine(original.negativeSequences)}
+              {blockageImpactLine(original.negativeSequences, t)}
             </AppText>
           </View>
 
@@ -134,7 +136,7 @@ export function SignatureReportScreen() {
           </View>
 
           <View style={styles.solution}>
-            <AppText variant="kicker">A solução</AppText>
+            <AppText variant="kicker">{t('report.solution')}</AppText>
             <AppText variant="signature" style={styles.solutionName}>
               {rectified.signature}
             </AppText>
@@ -143,13 +145,13 @@ export function SignatureReportScreen() {
                 danger={false}
                 label={
                   rectified.isHarmonicWithDestiny
-                    ? `Ápice ${rectified.triangle.apex} harmônico`
-                    : `Ápice ${rectified.triangle.apex}`
+                    ? t('report.apexHarmonic', { value: rectified.triangle.apex })
+                    : t('report.apex', { value: rectified.triangle.apex })
                 }
               />
-              <MetaChip danger={false} label={`Destino ${rectified.destinyNumber}`} />
+              <MetaChip danger={false} label={t('report.destinyChip', { value: rectified.destinyNumber })} />
               {rectified.negativeSequences.length === 0 ? (
-                <MetaChip danger={false} label="Livre de bloqueios" />
+                <MetaChip danger={false} label={t('report.freeOfBlockages')} />
               ) : null}
             </View>
             <CriticalTriangle
@@ -158,14 +160,12 @@ export function SignatureReportScreen() {
               triangle={rectified.triangle}
             />
             <AppText variant="body" style={styles.relief}>
-              {sameSignature
-                ? 'Esta já é a grafia mais alinhada que o laboratório encontrou para o seu Destino.'
-                : reliefLine(rectified)}
+              {sameSignature ? t('report.alreadyAligned') : reliefLine(rectified, t)}
             </AppText>
           </View>
 
           <AppText variant="caption" style={styles.watermark}>
-            Arcanum · Triângulo da Vida
+            {t('report.watermark')}
           </AppText>
         </LinearGradient>
       </View>
@@ -177,7 +177,7 @@ export function SignatureReportScreen() {
       ) : null}
 
       <GoldButton
-        label="Compartilhar meu Diagnóstico"
+        label={t('report.share')}
         loading={sharing}
         onPress={() => {
           void onShare();
@@ -186,7 +186,7 @@ export function SignatureReportScreen() {
       />
       {sameSignature ? null : (
         <GhostButton
-          label="Treinar a firma retificada"
+          label={t('report.train')}
           onPress={() => {
             if (!isPremium) {
               router.push('/paywall');
