@@ -1,4 +1,4 @@
-import * as FileSystem from 'expo-file-system/legacy';
+import { File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import { PixelRatio, Platform } from 'react-native';
 import { captureRef } from 'react-native-view-shot';
@@ -61,9 +61,7 @@ export async function shareSignaturePng(uri: string): Promise<void> {
   if (Platform.OS === 'web') {
     const dataUrl = uri.startsWith('data:')
       ? uri
-      : `data:image/png;base64,${await FileSystem.readAsStringAsync(uri, {
-          encoding: FileSystem.EncodingType.Base64,
-        })}`;
+      : `data:image/png;base64,${await new File(uri).base64()}`;
     downloadDataUrl(dataUrl);
     return;
   }
@@ -133,16 +131,13 @@ async function persistDataUrl(dataUrl: string): Promise<string> {
     return dataUrl;
   }
 
-  const directory = FileSystem.cacheDirectory;
-  if (directory === null) {
+  try {
+    const file = new File(Paths.cache, `arcanum-firma-${Date.now()}.png`);
+    file.write(base64, { encoding: 'base64' });
+    return file.uri;
+  } catch {
     return dataUrl;
   }
-
-  const path = `${directory}arcanum-firma-${Date.now()}.png`;
-  await FileSystem.writeAsStringAsync(path, base64, {
-    encoding: FileSystem.EncodingType.Base64,
-  });
-  return path;
 }
 
 function downloadDataUrl(dataUrl: string): void {

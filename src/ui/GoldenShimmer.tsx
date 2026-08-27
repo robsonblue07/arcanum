@@ -82,7 +82,10 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   beam: {
-    ...StyleSheet.absoluteFill,
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    left: 0,
     width: '55%',
   },
   stack: {
