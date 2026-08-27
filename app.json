@@ -16,9 +16,7 @@
         {
           "backgroundColor": "#07040F"
         }
-      ],
-      "expo-sharing",
-      "expo-print"
+      ]
     ],
     "experiments": {
       "typedRoutes": true
