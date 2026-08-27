@@ -1,0 +1,10 @@
+# Configuração mínima para Edge Functions do checkout Stripe.
+# Stripe assina o webhook com o próprio secret: JWT do gateway deve ficar off.
+
+project_id = "arcanum"
+
+[functions.create-checkout-session]
+verify_jwt = true
+
+[functions.stripe-webhook]
+verify_jwt = false

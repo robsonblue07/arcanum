@@ -17,6 +17,8 @@ export type {
   ProfileRow,
   ProfileInsert,
   ProfileUpdate,
+  StripeEventRow,
+  StripeEventInsert,
   SignatureRow,
   SignatureInsert,
   SignatureUpdate,

@@ -5,6 +5,10 @@ export interface ProfileRow {
   destino: number | null;
   expressao: number | null;
   is_premium: boolean;
+  stripe_customer_id: string | null;
+  stripe_subscription_id: string | null;
+  subscription_status: string | null;
+  plan_type: string | null;
   data_criacao: string;
 }
 
@@ -15,6 +19,10 @@ export interface ProfileInsert {
   destino?: number | null;
   expressao?: number | null;
   is_premium?: boolean;
+  stripe_customer_id?: string | null;
+  stripe_subscription_id?: string | null;
+  subscription_status?: string | null;
+  plan_type?: string | null;
   data_criacao?: string;
 }
 
@@ -24,6 +32,22 @@ export interface ProfileUpdate {
   destino?: number | null;
   expressao?: number | null;
   is_premium?: boolean;
+  stripe_customer_id?: string | null;
+  stripe_subscription_id?: string | null;
+  subscription_status?: string | null;
+  plan_type?: string | null;
+}
+
+export interface StripeEventRow {
+  id: string;
+  type: string;
+  created_at: string;
+}
+
+export interface StripeEventInsert {
+  id: string;
+  type: string;
+  created_at?: string;
 }
 
 export interface SignatureRow {
@@ -57,6 +81,12 @@ export interface Database {
         Row: ProfileRow;
         Insert: ProfileInsert;
         Update: ProfileUpdate;
+        Relationships: [];
+      };
+      stripe_events: {
+        Row: StripeEventRow;
+        Insert: StripeEventInsert;
+        Update: Record<string, never>;
         Relationships: [];
       };
       signatures: {
