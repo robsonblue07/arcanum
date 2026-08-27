@@ -59,6 +59,33 @@ export function DashboardScreen() {
         </AppText>
       </Animated.View>
 
+      <Animated.View entering={FadeInDown.duration(700).delay(360)}>
+        <Pressable
+          onPress={() => router.push('/oracle' as Href)}
+          style={({ pressed }) => [styles.heroCard, styles.oracleCard, pressed && styles.pressed]}
+        >
+          <LinearGradient
+            colors={['#2A2410', '#12081F']}
+            end={{ x: 1, y: 1 }}
+            start={{ x: 0, y: 0 }}
+            style={styles.heroInner}
+          >
+            <AppText variant="kicker">Previsão do dia</AppText>
+            <AppText variant="title" style={styles.heroTitle}>
+              Oráculo Diário: Sua Energia Hoje
+            </AppText>
+            <AppText variant="body" style={styles.heroCopy}>
+              O Dia Pessoal {personalDay} já vibra no seu mapa. Abra o oráculo e receba o conselho deste ciclo.
+            </AppText>
+            <View style={styles.heroCta}>
+              <AppText variant="caption" style={styles.heroCtaText}>
+                Consultar o dia
+              </AppText>
+            </View>
+          </LinearGradient>
+        </Pressable>
+      </Animated.View>
+
       <Animated.View entering={FadeInDown.duration(700).delay(420)}>
         <Pressable
           onPress={() => router.push('/triangle')}
@@ -246,6 +273,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   triangleCard: {
+    marginBottom: 14,
+    borderColor: colors.gold,
+  },
+  oracleCard: {
     marginBottom: 14,
     borderColor: colors.gold,
   },

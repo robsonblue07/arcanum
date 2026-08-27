@@ -37,3 +37,27 @@ export function isoToBrazilianDate(iso: string): string {
 export function formatDisplayDate(iso: string): string {
   return isoToBrazilianDate(iso);
 }
+
+const MONTHS_PT = [
+  'janeiro',
+  'fevereiro',
+  'março',
+  'abril',
+  'maio',
+  'junho',
+  'julho',
+  'agosto',
+  'setembro',
+  'outubro',
+  'novembro',
+  'dezembro',
+] as const;
+
+export function formatLongBrazilianDate(iso: string): string {
+  const parsed = parseBirthDate(iso);
+  const monthName = MONTHS_PT[parsed.month - 1];
+  if (monthName === undefined) {
+    return isoToBrazilianDate(iso);
+  }
+  return `${parsed.day} de ${monthName} de ${parsed.year}`;
+}

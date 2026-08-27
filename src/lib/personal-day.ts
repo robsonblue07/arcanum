@@ -1,16 +1,9 @@
-import { parseBirthDate, reducePreservingMasters } from '../domain/numerology';
-import type { ReducedNumber } from '../domain/numerology';
+import { calculatePersonalDay as calculatePersonalDayFromDomain } from '../domain/numerology';
 
+/** Fachada local: o motor vive no domínio. Usa o fuso do aparelho. */
 export function calculatePersonalDay(
   birthDate: string,
   today: Date = new Date(),
-): ReducedNumber {
-  const birth = parseBirthDate(birthDate);
-  const personalYear = reducePreservingMasters(
-    birth.month + birth.day + today.getFullYear(),
-  );
-  const personalMonth = reducePreservingMasters(
-    personalYear + (today.getMonth() + 1),
-  );
-  return reducePreservingMasters(personalMonth + today.getDate());
+): ReturnType<typeof calculatePersonalDayFromDomain> {
+  return calculatePersonalDayFromDomain(birthDate, today);
 }

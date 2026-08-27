@@ -30,6 +30,12 @@ export {
 } from './arcana-meanings';
 
 export {
+  ORACLE_DICTIONARY,
+  lookupOracleEntry,
+  type OracleEntry,
+} from './oracle-dictionary';
+
+export {
   NAME_PARTICLES,
   isNameParticle,
   splitNameWords,

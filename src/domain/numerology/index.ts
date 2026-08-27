@@ -65,9 +65,11 @@ export {
   NAME_PARTICLES,
   isNameParticle,
   splitNameWords,
+  ORACLE_DICTIONARY,
+  lookupOracleEntry,
 } from './tables';
 
-export type { MajorArcana, ArcanaMeaning } from './tables';
+export type { MajorArcana, ArcanaMeaning, OracleEntry } from './tables';
 
 export {
   calculatePythagoreanChart,
@@ -81,6 +83,10 @@ export {
   COMPOUND_ARCANA_MIN,
   KABBALISTIC_ARCANA_MAX,
   KABBALISTIC_ARCANA_MIN,
+  calculatePersonalCycles,
+  calculatePersonalDay,
+  readDailyOracle,
+  resolveLocalCalendarDate,
 } from './engines';
 
 export type {
@@ -96,6 +102,9 @@ export type {
   SynastryPersonSnapshot,
   SynastryResult,
   VibrationFamily,
+  DailyOracle,
+  OracleToday,
+  PersonalCycles,
 } from './engines';
 
 export { generateOptimizedSignatures, selectRectifiedSignature } from './generators';
