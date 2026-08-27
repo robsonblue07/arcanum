@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { changeAppLanguage, getActiveLanguage, type AppLanguage } from '../lib/i18n';
@@ -10,7 +11,7 @@ const OPTIONS: readonly { code: AppLanguage; sigla: string; flag: string; labelK
   { code: 'es-ES', sigla: 'ES', flag: '🇪🇸', labelKey: 'language.es' },
 ];
 
-export function LanguageSwitcher() {
+export const LanguageSwitcher = memo(function LanguageSwitcher() {
   const { t } = useTranslation();
   const active = getActiveLanguage();
 
@@ -44,7 +45,7 @@ export function LanguageSwitcher() {
       })}
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   row: {

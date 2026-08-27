@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useState } from 'react';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Redirect, useRouter, type Href } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -31,6 +31,15 @@ export function ForgeScreen() {
   const [destinyError, setDestinyError] = useState<string | undefined>();
   const [forging, setForging] = useState(false);
   const [results, setResults] = useState<readonly GoldenName[] | null>(null);
+  const ritualRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (ritualRef.current !== null) {
+        clearTimeout(ritualRef.current);
+      }
+    };
+  }, []);
 
   if (profile === null) {
     return <Redirect href="/" />;
@@ -68,7 +77,12 @@ export function ForgeScreen() {
     setForging(true);
     setResults(null);
 
-    setTimeout(() => {
+    if (ritualRef.current !== null) {
+      clearTimeout(ritualRef.current);
+    }
+
+    ritualRef.current = setTimeout(() => {
+      ritualRef.current = null;
       try {
         const forged =
           destiny === undefined
@@ -83,6 +97,11 @@ export function ForgeScreen() {
       }
     }, RITUAL_MS);
   };
+
+  const onWordChange = useCallback((index: number, value: string) => {
+    setWords((current) => current.map((item, i) => (i === index ? value : item)));
+    setWordError(undefined);
+  }, []);
 
   return (
     <Screen>
@@ -122,19 +141,16 @@ export function ForgeScreen() {
 
       <View style={styles.fields}>
         {words.map((word, index) => (
-          <Field
-            key={`word-${index}`}
-            autoCapitalize="words"
+          <ForgeWordField
             error={index === 0 ? wordError : undefined}
+            index={index}
+            key={`word-${index}`}
             label={
               kind === 'business'
                 ? t('forge.wordLabel', { index: index + 1 })
                 : t('forge.nameLabel', { index: index + 1 })
             }
-            onChangeText={(value) => {
-              setWords((current) => current.map((item, i) => (i === index ? value : item)));
-              setWordError(undefined);
-            }}
+            onChange={onWordChange}
             placeholder={kind === 'business' ? t('forge.wordPlaceholder') : t('forge.namePlaceholder')}
             value={word}
           />
@@ -187,25 +203,13 @@ export function ForgeScreen() {
             </AppText>
           ) : (
             results.map((item) => (
-              <View key={item.name} style={styles.card}>
-                <View style={styles.cardHeader}>
-                  <AppText variant="signature" style={styles.cardName}>
-                    {item.name}
-                  </AppText>
-                  <View style={styles.apexSeal}>
-                    <AppText variant="caption">{t('common.apex')}</AppText>
-                    <AppText variant="number" style={styles.apexValue}>
-                      {item.apex}
-                    </AppText>
-                  </View>
-                </View>
-                <AppText variant="caption" style={styles.cardMeta}>
-                  {item.isHarmonicWithDestiny ? t('forge.harmonyGold') : t('forge.freeOfBlockages')}
-                  {item.apex === 8 || item.apex === 3 || item.apex === 9
-                    ? t('forge.expansion')
-                    : ''}
-                </AppText>
-              </View>
+              <GoldenNameCard
+                expansionLabel={t('forge.expansion')}
+                freeLabel={t('forge.freeOfBlockages')}
+                harmonyLabel={t('forge.harmonyGold')}
+                item={item}
+                key={item.name}
+              />
             ))
           )}
         </View>
@@ -213,6 +217,75 @@ export function ForgeScreen() {
     </Screen>
   );
 }
+
+const ForgeWordField = memo(function ForgeWordField({
+  error,
+  index,
+  label,
+  onChange,
+  placeholder,
+  value,
+}: {
+  error: string | undefined;
+  index: number;
+  label: string;
+  onChange: (index: number, value: string) => void;
+  placeholder: string;
+  value: string;
+}) {
+  const onChangeText = useCallback(
+    (next: string) => {
+      onChange(index, next);
+    },
+    [index, onChange],
+  );
+
+  return (
+    <Field
+      autoCapitalize="words"
+      error={error}
+      label={label}
+      onChangeText={onChangeText}
+      placeholder={placeholder}
+      value={value}
+    />
+  );
+});
+
+const GoldenNameCard = memo(function GoldenNameCard({
+  expansionLabel,
+  freeLabel,
+  harmonyLabel,
+  item,
+}: {
+  expansionLabel: string;
+  freeLabel: string;
+  harmonyLabel: string;
+  item: GoldenName;
+}) {
+  const { t } = useTranslation();
+  const expanding = item.apex === 8 || item.apex === 3 || item.apex === 9;
+
+  return (
+    <View style={styles.card}>
+      <View style={styles.cardHeader}>
+        <AppText variant="signature" style={styles.cardName}>
+          {item.name}
+        </AppText>
+        <View style={styles.apexSeal}>
+          <AppText variant="caption">{t('common.apex')}</AppText>
+          <AppText variant="number" style={styles.apexValue}>
+            {item.apex}
+          </AppText>
+        </View>
+      </View>
+      <AppText variant="caption" style={styles.cardMeta}>
+        {item.isHarmonicWithDestiny ? harmonyLabel : freeLabel}
+        {expanding ? expansionLabel : ''}
+      </AppText>
+    </View>
+  );
+});
 
 function Segment({
   active,

@@ -1,11 +1,3 @@
-import { calculatePythagoreanChart } from './pythagorean-chart';
-import { buildKabbalisticTriangle } from './kabbalistic-triangle';
-import { findNegativeSequences } from './negative-sequences';
-import { calculateSynastry } from './synastry';
-import { calculatePersonalCycles, readDailyOracle } from './oracle';
-import { generateGoldenNames } from './forge';
-import { buildCanonicalReportPayload } from './report-payload';
-
 export { calculatePythagoreanChart } from './pythagorean-chart';
 export { buildKabbalisticTriangle } from './kabbalistic-triangle';
 export { findNegativeSequences } from './negative-sequences';
@@ -51,14 +43,3 @@ export type {
   SynastryResult,
   VibrationFamily,
 } from './synastry';
-
-export const numerologyEngines = {
-  calculatePythagoreanChart,
-  buildKabbalisticTriangle,
-  findNegativeSequences,
-  calculateSynastry,
-  calculatePersonalCycles,
-  readDailyOracle,
-  buildCanonicalReportPayload,
-  generateGoldenNames,
-} as const;

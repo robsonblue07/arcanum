@@ -1,4 +1,4 @@
-import { calculatePersonalDay as calculatePersonalDayFromDomain } from '../domain/numerology';
+import { calculatePersonalDay as calculatePersonalDayFromDomain } from '../domain/numerology/engines/oracle';
 
 /** Fachada local: o motor vive no domínio. Usa o fuso do aparelho. */
 export function calculatePersonalDay(

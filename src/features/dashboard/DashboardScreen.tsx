@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Redirect, useRouter, type Href } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTranslation } from 'react-i18next';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
-import { calculatePythagoreanChart } from '../../domain/numerology';
+import { calculatePythagoreanChart } from '../../domain/numerology/engines/pythagorean-chart';
 import { formatDisplayDate } from '../../lib/dates';
 import { calculatePersonalDay } from '../../lib/personal-day';
 import { toUserError } from '../../lib/to-user-error';
@@ -29,12 +29,22 @@ export function DashboardScreen() {
   const isPremium = useIsPremium();
   const [simulating, setSimulating] = useState(false);
 
-  if (profile === null) {
+  const chart = useMemo(() => {
+    if (profile === null) {
+      return null;
+    }
+    return calculatePythagoreanChart(profile.fullName, profile.birthDate);
+  }, [profile]);
+  const personalDay = useMemo(() => {
+    if (profile === null) {
+      return null;
+    }
+    return calculatePersonalDay(profile.birthDate);
+  }, [profile]);
+
+  if (profile === null || chart === null || personalDay === null) {
     return <Redirect href="/" />;
   }
-
-  const chart = calculatePythagoreanChart(profile.fullName, profile.birthDate);
-  const personalDay = calculatePersonalDay(profile.birthDate);
 
   return (
     <Screen>

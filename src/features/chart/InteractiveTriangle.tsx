@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { memo, useCallback, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import {
   readTriangleCell,
@@ -17,7 +17,7 @@ interface InteractiveTriangleProps {
   showBaseLetters?: boolean | undefined;
 }
 
-export function InteractiveTriangle({
+export const InteractiveTriangle = memo(function InteractiveTriangle({
   triangle,
   sequences,
   density = 'compact',
@@ -34,6 +34,25 @@ export function InteractiveTriangle({
       ),
     [sequences],
   );
+  const compoundCells = useMemo(
+    () =>
+      new Set(triangle.arcanumHits.map((hit) => `${hit.rowIndex}:${hit.columnIndex}`)),
+    [triangle.arcanumHits],
+  );
+
+  const onSelectCell = useCallback(
+    (rowIndex: number, columnIndex: number, blocked: boolean) => {
+      const next = readTriangleCell(triangle, rowIndex, columnIndex, blocked);
+      if (next !== null) {
+        setReading(next);
+      }
+    },
+    [triangle],
+  );
+
+  const onCloseReading = useCallback(() => {
+    setReading(null);
+  }, []);
 
   return (
     <>
@@ -61,53 +80,84 @@ export function InteractiveTriangle({
               {row.map((digit, columnIndex) => {
                 const key = `${rowIndex}:${columnIndex}`;
                 const blocked = blockedCells.has(key);
-                const compound = triangle.arcanumHits.some(
-                  (hit) => hit.rowIndex === rowIndex && hit.columnIndex === columnIndex,
-                );
-                const selected =
-                  reading?.rowIndex === rowIndex && reading.columnIndex === columnIndex;
-
                 return (
-                  <Pressable
-                    accessibilityRole="button"
+                  <TriangleNode
                     accessibilityLabel={`Número ${digit}, linha ${rowIndex + 1}`}
+                    blocked={blocked}
+                    columnIndex={columnIndex}
+                    comfortable={comfortable}
+                    compound={compoundCells.has(key) && !blocked}
+                    digit={digit}
                     key={key}
-                    onPress={() => {
-                      const next = readTriangleCell(triangle, rowIndex, columnIndex, blocked);
-                      if (next !== null) {
-                        setReading(next);
-                      }
-                    }}
-                    style={({ pressed }) => [
-                      styles.node,
-                      comfortable ? styles.nodeLg : styles.nodeSm,
-                      blocked ? styles.nodeBlocked : styles.nodeGold,
-                      compound && !blocked ? styles.nodeCompound : null,
-                      selected ? styles.nodeSelected : null,
-                      pressed && styles.nodePressed,
-                    ]}
-                  >
-                    <AppText
-                      variant="number"
-                      style={[
-                        styles.digit,
-                        comfortable ? styles.digitLg : styles.digitSm,
-                        blocked ? styles.digitBlocked : styles.digitGold,
-                      ]}
-                    >
-                      {digit}
-                    </AppText>
-                  </Pressable>
+                    onSelect={onSelectCell}
+                    rowIndex={rowIndex}
+                    selected={
+                      reading?.rowIndex === rowIndex && reading.columnIndex === columnIndex
+                    }
+                  />
                 );
               })}
             </View>
           ))}
         </View>
       </ScrollView>
-      <ArcanaBottomSheet onClose={() => setReading(null)} reading={reading} />
+      <ArcanaBottomSheet onClose={onCloseReading} reading={reading} />
     </>
   );
-}
+});
+
+const TriangleNode = memo(function TriangleNode({
+  accessibilityLabel,
+  blocked,
+  columnIndex,
+  comfortable,
+  compound,
+  digit,
+  onSelect,
+  rowIndex,
+  selected,
+}: {
+  accessibilityLabel: string;
+  blocked: boolean;
+  columnIndex: number;
+  comfortable: boolean;
+  compound: boolean;
+  digit: number;
+  onSelect: (rowIndex: number, columnIndex: number, blocked: boolean) => void;
+  rowIndex: number;
+  selected: boolean;
+}) {
+  const onPress = useCallback(() => {
+    onSelect(rowIndex, columnIndex, blocked);
+  }, [blocked, columnIndex, onSelect, rowIndex]);
+
+  return (
+    <Pressable
+      accessibilityLabel={accessibilityLabel}
+      accessibilityRole="button"
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.node,
+        comfortable ? styles.nodeLg : styles.nodeSm,
+        blocked ? styles.nodeBlocked : styles.nodeGold,
+        compound ? styles.nodeCompound : null,
+        selected ? styles.nodeSelected : null,
+        pressed && styles.nodePressed,
+      ]}
+    >
+      <AppText
+        variant="number"
+        style={[
+          styles.digit,
+          comfortable ? styles.digitLg : styles.digitSm,
+          blocked ? styles.digitBlocked : styles.digitGold,
+        ]}
+      >
+        {digit}
+      </AppText>
+    </Pressable>
+  );
+});
 
 const styles = StyleSheet.create({
   scroll: {

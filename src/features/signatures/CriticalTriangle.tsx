@@ -1,3 +1,4 @@
+import { memo, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import type { KabbalisticTriangle, NegativeSequence } from '../../domain/numerology';
 import { colors, fonts } from '../../theme';
@@ -9,13 +10,21 @@ interface CriticalTriangleProps {
   tone: 'danger' | 'gold';
 }
 
-export function CriticalTriangle({ triangle, sequences, tone }: CriticalTriangleProps) {
-  const blocked = new Set(
-    sequences.flatMap((sequence) =>
-      sequence.cells.map((cell) => `${cell.rowIndex}:${cell.columnIndex}`),
-    ),
+export const CriticalTriangle = memo(function CriticalTriangle({
+  triangle,
+  sequences,
+  tone,
+}: CriticalTriangleProps) {
+  const blocked = useMemo(
+    () =>
+      new Set(
+        sequences.flatMap((sequence) =>
+          sequence.cells.map((cell) => `${cell.rowIndex}:${cell.columnIndex}`),
+        ),
+      ),
+    [sequences],
   );
-  const rows = criticalRows(triangle, blocked);
+  const rows = useMemo(() => criticalRows(triangle, blocked), [blocked, triangle]);
   const danger = tone === 'danger';
 
   return (
@@ -50,7 +59,7 @@ export function CriticalTriangle({ triangle, sequences, tone }: CriticalTriangle
       ))}
     </View>
   );
-}
+});
 
 function criticalRows(
   triangle: KabbalisticTriangle,

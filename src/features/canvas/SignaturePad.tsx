@@ -1,4 +1,4 @@
-import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
+import { forwardRef, memo, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import {
   PanResponder,
   StyleSheet,
@@ -26,8 +26,11 @@ export interface SignaturePadHandle {
   capturePng: () => Promise<string>;
 }
 
-export const SignaturePad = forwardRef<SignaturePadHandle, SignaturePadProps>(
-  function SignaturePad({ onStrokesChange, clearSignal }, ref) {
+export const SignaturePad = memo(
+  forwardRef<SignaturePadHandle, SignaturePadProps>(function SignaturePad(
+    { onStrokesChange, clearSignal },
+    ref,
+  ) {
     const [size, setSize] = useState({ width: 0, height: 0 });
     const [strokes, setStrokes] = useState<Stroke[]>([]);
     const currentStroke = useRef<Stroke>([]);
@@ -80,6 +83,15 @@ export const SignaturePad = forwardRef<SignaturePadHandle, SignaturePadProps>(
       }),
       [flush],
     );
+
+    useEffect(() => {
+      return () => {
+        if (frame.current !== null) {
+          cancelAnimationFrame(frame.current);
+          frame.current = null;
+        }
+      };
+    }, []);
 
     const panResponder = useMemo(
       () =>
@@ -169,8 +181,10 @@ export const SignaturePad = forwardRef<SignaturePadHandle, SignaturePadProps>(
         ) : null}
       </View>
     );
-  },
+  }),
 );
+
+SignaturePad.displayName = 'SignaturePad';
 
 function waitForPaint(): Promise<void> {
   return new Promise((resolve) => {

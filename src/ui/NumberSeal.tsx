@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { colors, fonts } from '../theme';
 
@@ -7,7 +8,11 @@ interface NumberSealProps {
   size?: 'md' | 'lg';
 }
 
-export function NumberSeal({ value, caption, size = 'md' }: NumberSealProps) {
+export const NumberSeal = memo(function NumberSeal({
+  value,
+  caption,
+  size = 'md',
+}: NumberSealProps) {
   const dimension = size === 'lg' ? 128 : 92;
   const fontSize = size === 'lg' ? 52 : 36;
 
@@ -21,7 +26,7 @@ export function NumberSeal({ value, caption, size = 'md' }: NumberSealProps) {
       <Text style={styles.caption}>{caption}</Text>
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   wrap: { alignItems: 'center', gap: 10 },
