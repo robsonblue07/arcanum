@@ -89,6 +89,7 @@ export {
   resolveLocalCalendarDate,
   buildCanonicalReportPayload,
   GRIMOIRE_CHAPTERS,
+  generateGoldenNames,
 } from './engines';
 
 export type {
@@ -113,6 +114,9 @@ export type {
   CanonicalSignature,
   ReportProfileInput,
   SynastryReportSummary,
+  ForgeKind,
+  ForgeOptions,
+  GoldenName,
 } from './engines';
 
 export { generateOptimizedSignatures, selectRectifiedSignature } from './generators';

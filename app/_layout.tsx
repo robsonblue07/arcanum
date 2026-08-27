@@ -72,6 +72,10 @@ export default function RootLayout() {
           options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }}
         />
         <Stack.Screen
+          name="forge"
+          options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }}
+        />
+        <Stack.Screen
           name="train"
           options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }}
         />

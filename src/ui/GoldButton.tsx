@@ -101,6 +101,7 @@ const styles = StyleSheet.create({
     letterSpacing: 1.1,
     textAlign: 'center',
     textTransform: 'uppercase',
+    flexWrap: 'wrap',
   },
   labelSecondary: {
     color: colors.goldSoft,

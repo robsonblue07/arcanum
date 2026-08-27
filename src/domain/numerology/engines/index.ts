@@ -3,6 +3,7 @@ import { buildKabbalisticTriangle } from './kabbalistic-triangle';
 import { findNegativeSequences } from './negative-sequences';
 import { calculateSynastry } from './synastry';
 import { calculatePersonalCycles, readDailyOracle } from './oracle';
+import { generateGoldenNames } from './forge';
 import { buildCanonicalReportPayload } from './report-payload';
 
 export { calculatePythagoreanChart } from './pythagorean-chart';
@@ -27,6 +28,8 @@ export {
 } from './oracle';
 export type { DailyOracle, OracleToday, PersonalCycles } from './oracle';
 export { buildCanonicalReportPayload, GRIMOIRE_CHAPTERS } from './report-payload';
+export { generateGoldenNames } from './forge';
+export type { ForgeKind, ForgeOptions, GoldenName } from './forge';
 export type {
   CanonicalArcana,
   CanonicalBlockage,
@@ -57,4 +60,5 @@ export const numerologyEngines = {
   calculatePersonalCycles,
   readDailyOracle,
   buildCanonicalReportPayload,
+  generateGoldenNames,
 } as const;

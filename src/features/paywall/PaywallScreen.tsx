@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import { toUserError } from '../../lib/to-user-error';
 import { setPremiumUnlocked } from '../../store/premium';
 import { colors, fonts, radii } from '../../theme';
@@ -12,6 +12,9 @@ import { Screen } from '../../ui/Screen';
 
 type PlanId = 'lifetime' | 'monthly';
 
+const FORGE_CTA =
+  'Desbloqueie a Forja para criar Marcas e Nomes blindados contra bloqueios financeiros';
+
 const BENEFITS = [
   'Liberação de todas as assinaturas harmônicas',
   'Ateliê de treino guiado ilimitado',
@@ -20,6 +23,8 @@ const BENEFITS = [
 
 export function PaywallScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams<{ intent?: string | string[] }>();
+  const fromForge = firstParam(params.intent) === 'forge';
   const [plan, setPlan] = useState<PlanId>('lifetime');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | undefined>();
@@ -29,7 +34,7 @@ export function PaywallScreen() {
       router.back();
       return;
     }
-    router.replace('/(tabs)/signature-lab');
+    router.replace(fromForge ? ('/forge' as Href) : '/(tabs)/signature-lab');
   };
 
   const unlock = async () => {
@@ -37,7 +42,7 @@ export function PaywallScreen() {
     setError(undefined);
     try {
       await setPremiumUnlocked(true);
-      router.replace('/(tabs)/signature-lab');
+      router.replace(fromForge ? ('/forge' as Href) : '/(tabs)/signature-lab');
     } catch (caught) {
       setError(toUserError(caught));
       setLoading(false);
@@ -54,10 +59,12 @@ export function PaywallScreen() {
         Arcanum Pro
       </AppText>
       <AppText variant="display" style={styles.title}>
-        Liberte seu Destino Financeiro
+        {fromForge ? 'A Forja Cabalística' : 'Liberte seu Destino Financeiro'}
       </AppText>
       <AppText variant="body" style={styles.subtitle}>
-        A sua assinatura atual está travando sua prosperidade. Desbloqueie sua nova identidade.
+        {fromForge
+          ? FORGE_CTA
+          : 'A sua assinatura atual está travando sua prosperidade. Desbloqueie sua nova identidade.'}
       </AppText>
 
       <View style={styles.benefits}>
@@ -114,7 +121,7 @@ export function PaywallScreen() {
       ) : null}
 
       <GoldButton
-        label="Garantir Minha Transformação Agora"
+        label={fromForge ? FORGE_CTA : 'Garantir Minha Transformação Agora'}
         loading={loading}
         onPress={() => {
           void unlock();
@@ -132,6 +139,13 @@ export function PaywallScreen() {
       />
     </Screen>
   );
+}
+
+function firstParam(value: string | string[] | undefined): string | undefined {
+  if (Array.isArray(value)) {
+    return value[0];
+  }
+  return value;
 }
 
 const styles = StyleSheet.create({

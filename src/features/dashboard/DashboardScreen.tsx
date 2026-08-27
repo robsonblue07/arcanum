@@ -167,6 +167,33 @@ export function DashboardScreen() {
         </Pressable>
       </Animated.View>
 
+      <Animated.View entering={FadeInDown.duration(700).delay(600)}>
+        <Pressable
+          onPress={() => router.push('/forge' as Href)}
+          style={({ pressed }) => [styles.heroCard, styles.forgeCard, pressed && styles.pressed]}
+        >
+          <LinearGradient
+            colors={['#3A2808', '#12081F']}
+            end={{ x: 1, y: 1 }}
+            start={{ x: 0, y: 0 }}
+            style={styles.heroInner}
+          >
+            <AppText variant="kicker">Supremo</AppText>
+            <AppText variant="title" style={styles.heroTitle}>
+              A Forja: Gerador de Marcas e Bebês
+            </AppText>
+            <AppText variant="body" style={styles.heroCopy}>
+              Permute palavras, descarte bloqueios 111–999 e receba os cinco Nomes de Ouro.
+            </AppText>
+            <View style={styles.heroCta}>
+              <AppText variant="caption" style={styles.heroCtaText}>
+                Entrar na forja
+              </AppText>
+            </View>
+          </LinearGradient>
+        </Pressable>
+      </Animated.View>
+
       <Animated.View entering={FadeInDown.duration(700).delay(620)}>
         <Pressable
           onPress={() => router.push('/(tabs)/signature-lab')}
@@ -314,6 +341,10 @@ const styles = StyleSheet.create({
   grimoireCard: {
     marginBottom: 14,
     borderColor: colors.gold,
+  },
+  forgeCard: {
+    marginBottom: 14,
+    borderColor: colors.goldSoft,
   },
   heroInner: {
     padding: 22,
