@@ -4,6 +4,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { toUserError } from '../../lib/to-user-error';
+import { hapticSelection } from '../../lib/haptics';
 import { setPremiumUnlocked } from '../../store/premium';
 import { colors, fonts, radii } from '../../theme';
 import { AppText } from '../../ui/AppText';
@@ -72,7 +73,10 @@ export function PaywallScreen() {
       </View>
 
       <Pressable
-        onPress={() => setPlan('lifetime')}
+        onPress={() => {
+          hapticSelection();
+          setPlan('lifetime');
+        }}
         style={[styles.plan, plan === 'lifetime' ? styles.planSelected : null]}
       >
         <View style={styles.planHeader}>
@@ -93,7 +97,10 @@ export function PaywallScreen() {
       </Pressable>
 
       <Pressable
-        onPress={() => setPlan('monthly')}
+        onPress={() => {
+          hapticSelection();
+          setPlan('monthly');
+        }}
         style={[styles.plan, plan === 'monthly' ? styles.planSelected : null]}
       >
         <AppText variant="title" style={styles.planTitle}>

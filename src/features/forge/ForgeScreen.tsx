@@ -3,17 +3,15 @@ import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Redirect, useRouter, type Href } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import {
-  generateGoldenNames,
-  type ForgeKind,
-  type GoldenName,
-} from '../../domain/numerology';
+import { generateGoldenNames, type ForgeKind, type GoldenName } from '../../domain/numerology';
+import { hapticSuccess } from '../../lib/haptics';
 import { useIsPremium } from '../../store/premium';
 import { useProfileStore } from '../../store/profile-store';
 import { colors, fonts, radii } from '../../theme';
 import { AppText } from '../../ui/AppText';
 import { Field } from '../../ui/Field';
 import { GoldButton } from '../../ui/GoldButton';
+import { GoldenShimmerStack } from '../../ui/GoldenShimmer';
 import { Screen } from '../../ui/Screen';
 
 const RITUAL_MS = 820;
@@ -89,6 +87,7 @@ export function ForgeScreen() {
             ? generateGoldenNames({ type: kind, baseWords })
             : generateGoldenNames({ type: kind, baseWords, targetDestiny: destiny });
         setResults(forged);
+        hapticSuccess();
       } catch (caught) {
         setWordError(caught instanceof Error ? caught.message : t('forge.forgeFail'));
         setResults(null);
@@ -180,6 +179,7 @@ export function ForgeScreen() {
 
       <GoldButton
         disabled={forging}
+        haptic={isPremium ? 'light' : 'warning'}
         label={t('forge.cta')}
         loading={forging}
         onPress={onForge}
@@ -191,6 +191,7 @@ export function ForgeScreen() {
           <AppText variant="body" style={styles.ritualText}>
             {t('forge.ritual')}
           </AppText>
+          <GoldenShimmerStack count={3} itemHeight={88} />
         </View>
       ) : null}
 
@@ -389,6 +390,7 @@ const styles = StyleSheet.create({
     marginTop: 22,
   },
   ritual: {
+    gap: 16,
     marginTop: 18,
   },
   ritualText: {

@@ -1,4 +1,5 @@
 import { StyleSheet, Text, TextInput, View } from 'react-native';
+import { hapticSelection } from '../lib/haptics';
 import { colors, fonts, radii } from '../theme';
 
 interface FieldProps {
@@ -33,6 +34,9 @@ export function Field({
         autoCorrect={false}
         keyboardType={keyboardType}
         onChangeText={onChangeText}
+        onFocus={() => {
+          hapticSelection();
+        }}
         placeholder={placeholder}
         placeholderTextColor={colors.muted}
         secureTextEntry={secureTextEntry}

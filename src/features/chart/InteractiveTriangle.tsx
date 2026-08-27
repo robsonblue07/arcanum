@@ -1,5 +1,6 @@
-import { memo, useCallback, useMemo, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import {
   readTriangleCell,
   type KabbalisticTriangle,
@@ -9,6 +10,8 @@ import {
 import { colors, fonts } from '../../theme';
 import { AppText } from '../../ui/AppText';
 import { ArcanaBottomSheet } from './ArcanaBottomSheet';
+
+const NODE_SPRING = { damping: 16, stiffness: 220, mass: 0.8 } as const;
 
 interface InteractiveTriangleProps {
   triangle: KabbalisticTriangle;
@@ -127,35 +130,45 @@ const TriangleNode = memo(function TriangleNode({
   rowIndex: number;
   selected: boolean;
 }) {
+  const scale = useSharedValue(1);
   const onPress = useCallback(() => {
     onSelect(rowIndex, columnIndex, blocked);
   }, [blocked, columnIndex, onSelect, rowIndex]);
 
+  useEffect(() => {
+    scale.value = withSpring(selected ? 1.08 : 1, NODE_SPRING);
+  }, [scale, selected]);
+
+  const springStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
   return (
-    <Pressable
-      accessibilityLabel={accessibilityLabel}
-      accessibilityRole="button"
-      onPress={onPress}
-      style={({ pressed }) => [
-        styles.node,
-        comfortable ? styles.nodeLg : styles.nodeSm,
-        blocked ? styles.nodeBlocked : styles.nodeGold,
-        compound ? styles.nodeCompound : null,
-        selected ? styles.nodeSelected : null,
-        pressed && styles.nodePressed,
-      ]}
-    >
-      <AppText
-        variant="number"
-        style={[
-          styles.digit,
-          comfortable ? styles.digitLg : styles.digitSm,
-          blocked ? styles.digitBlocked : styles.digitGold,
+    <Animated.View style={springStyle}>
+      <Pressable
+        accessibilityLabel={accessibilityLabel}
+        accessibilityRole="button"
+        onPress={onPress}
+        style={({ pressed }) => [
+          styles.node,
+          comfortable ? styles.nodeLg : styles.nodeSm,
+          blocked ? styles.nodeBlocked : styles.nodeGold,
+          compound ? styles.nodeCompound : null,
+          pressed && styles.nodePressed,
         ]}
       >
-        {digit}
-      </AppText>
-    </Pressable>
+        <AppText
+          variant="number"
+          style={[
+            styles.digit,
+            comfortable ? styles.digitLg : styles.digitSm,
+            blocked ? styles.digitBlocked : styles.digitGold,
+          ]}
+        >
+          {digit}
+        </AppText>
+      </Pressable>
+    </Animated.View>
   );
 });
 
@@ -220,9 +233,6 @@ const styles = StyleSheet.create({
   nodeBlocked: {
     backgroundColor: colors.dangerDim,
     borderColor: colors.danger,
-  },
-  nodeSelected: {
-    transform: [{ scale: 1.08 }],
   },
   nodePressed: {
     opacity: 0.82,

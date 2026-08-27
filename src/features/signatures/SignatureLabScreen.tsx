@@ -177,6 +177,7 @@ function SignatureCard({
         {locked ? (
           <GoldButton
             label="Desbloquear Minha Nova Assinatura Próspera"
+            haptic="warning"
             onPress={() => {
               router.push('/paywall');
             }}

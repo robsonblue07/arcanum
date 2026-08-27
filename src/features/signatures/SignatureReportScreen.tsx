@@ -4,6 +4,7 @@ import { Redirect, useRouter } from 'expo-router';
 import { useMemo, useRef, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 import {
   generateOptimizedSignatures,
   selectRectifiedSignature,
@@ -102,7 +103,10 @@ export function SignatureReportScreen() {
             {t('report.brandSub')}
           </AppText>
 
-          <View style={styles.problem}>
+          <Animated.View
+            entering={FadeInDown.springify().damping(16).stiffness(170)}
+            style={styles.problem}
+          >
             <AppText variant="kicker" style={styles.problemKicker}>
               {t('report.problem')}
             </AppText>
@@ -125,7 +129,7 @@ export function SignatureReportScreen() {
             <AppText variant="body" style={styles.impact}>
               {blockageImpactLine(original.negativeSequences, t)}
             </AppText>
-          </View>
+          </Animated.View>
 
           <View style={styles.versus}>
             <View style={styles.versusLine} />
@@ -135,7 +139,10 @@ export function SignatureReportScreen() {
             <View style={styles.versusLine} />
           </View>
 
-          <View style={styles.solution}>
+          <Animated.View
+            entering={FadeInDown.delay(90).springify().damping(16).stiffness(170)}
+            style={styles.solution}
+          >
             <AppText variant="kicker">{t('report.solution')}</AppText>
             <AppText variant="signature" style={styles.solutionName}>
               {rectified.signature}
@@ -162,7 +169,7 @@ export function SignatureReportScreen() {
             <AppText variant="body" style={styles.relief}>
               {sameSignature ? t('report.alreadyAligned') : reliefLine(rectified, t)}
             </AppText>
-          </View>
+          </Animated.View>
 
           <AppText variant="caption" style={styles.watermark}>
             {t('report.watermark')}
@@ -187,6 +194,7 @@ export function SignatureReportScreen() {
       {sameSignature ? null : (
         <GhostButton
           label={t('report.train')}
+          haptic={!isPremium ? 'warning' : 'light'}
           onPress={() => {
             if (!isPremium) {
               router.push('/paywall');

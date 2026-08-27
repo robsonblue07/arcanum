@@ -1,4 +1,5 @@
 import { Pressable, StyleSheet, Text, type StyleProp, type ViewStyle } from 'react-native';
+import { hapticLight, hapticWarning } from '../lib/haptics';
 import { colors, fonts, radii } from '../theme';
 
 interface GhostButtonProps {
@@ -6,14 +7,28 @@ interface GhostButtonProps {
   onPress: () => void;
   style?: StyleProp<ViewStyle> | undefined;
   disabled?: boolean | undefined;
+  haptic?: 'light' | 'warning' | 'none' | undefined;
 }
 
-export function GhostButton({ label, onPress, style, disabled = false }: GhostButtonProps) {
+export function GhostButton({
+  label,
+  onPress,
+  style,
+  disabled = false,
+  haptic = 'light',
+}: GhostButtonProps) {
   return (
     <Pressable
       accessibilityRole="button"
       disabled={disabled}
-      onPress={onPress}
+      onPress={() => {
+        if (haptic === 'warning') {
+          hapticWarning();
+        } else if (haptic === 'light') {
+          hapticLight();
+        }
+        onPress();
+      }}
       style={({ pressed }) => [
         styles.wrap,
         style,

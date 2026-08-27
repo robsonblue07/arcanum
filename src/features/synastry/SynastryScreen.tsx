@@ -245,7 +245,7 @@ function ResultPanel({
             <AppText variant="body" style={styles.lockCopy}>
               {t('synastry.lockCopy')}
             </AppText>
-            <GoldButton label={t('synastry.lockCta')} onPress={onUnlock} />
+            <GoldButton label={t('synastry.lockCta')} haptic="warning" onPress={onUnlock} />
           </View>
         ) : null}
       </View>

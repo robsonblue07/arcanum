@@ -1,6 +1,15 @@
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Modal, Pressable, StyleSheet, View } from 'react-native';
+import Animated, {
+  runOnJS,
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+  withTiming,
+} from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { TriangleCellReading } from '../../domain/numerology';
+import { hapticLight } from '../../lib/haptics';
 import { colors, fonts, radii } from '../../theme';
 import { AppText } from '../../ui/AppText';
 import { GhostButton } from '../../ui/GhostButton';
@@ -10,47 +19,97 @@ interface ArcanaBottomSheetProps {
   onClose: () => void;
 }
 
+const SPRING = { damping: 18, stiffness: 240, mass: 0.86 } as const;
+
 export function ArcanaBottomSheet({ reading, onClose }: ArcanaBottomSheetProps) {
   const insets = useSafeAreaInsets();
-  const visible = reading !== null;
+  const [held, setHeld] = useState<TriangleCellReading | null>(reading);
+  const translateY = useSharedValue(420);
+  const overlay = useSharedValue(0);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+
+  useEffect(() => {
+    if (reading === null) {
+      return;
+    }
+    hapticLight();
+    setHeld(reading);
+    overlay.value = withTiming(1, { duration: 180 });
+    translateY.value = 36;
+    translateY.value = withSpring(0, SPRING);
+  }, [overlay, reading, translateY]);
+
+  const finishClose = useCallback((): void => {
+    setHeld(null);
+    onCloseRef.current();
+  }, []);
+
+  const dismiss = (): void => {
+    overlay.value = withTiming(0, { duration: 160 });
+    translateY.value = withSpring(420, { damping: 20, stiffness: 190, mass: 0.9 }, (finished) => {
+      if (finished) {
+        runOnJS(finishClose)();
+      }
+    });
+  };
+
+  const overlayStyle = useAnimatedStyle(() => ({
+    opacity: overlay.value,
+  }));
+
+  const sheetStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: translateY.value }],
+  }));
+
+  const visible = held !== null;
+  const shown = held;
 
   return (
     <Modal
-      animationType="fade"
-      onRequestClose={onClose}
+      animationType="none"
+      onRequestClose={dismiss}
       statusBarTranslucent
       transparent
       visible={visible}
     >
       <View style={styles.overlay}>
-        <Pressable accessibilityRole="button" onPress={onClose} style={styles.backdrop} />
-        {reading !== null ? (
-          <View style={[styles.sheet, { paddingBottom: Math.max(20, insets.bottom + 12) }]}>
+        <Animated.View style={[styles.backdropFill, overlayStyle]}>
+          <Pressable accessibilityRole="button" onPress={dismiss} style={styles.backdrop} />
+        </Animated.View>
+        {shown !== null ? (
+          <Animated.View
+            style={[
+              styles.sheet,
+              { paddingBottom: Math.max(20, insets.bottom + 12) },
+              sheetStyle,
+            ]}
+          >
             <View style={styles.handle} />
-            <AppText variant="kicker" style={reading.blocked ? styles.kickerBlocked : undefined}>
-              {sheetKicker(reading)}
+            <AppText variant="kicker" style={shown.blocked ? styles.kickerBlocked : undefined}>
+              {sheetKicker(shown)}
             </AppText>
             <View style={styles.titleRow}>
-              <View style={[styles.seal, reading.blocked ? styles.sealBlocked : styles.sealGold]}>
+              <View style={[styles.seal, shown.blocked ? styles.sealBlocked : styles.sealGold]}>
                 <AppText
                   variant="number"
-                  style={[styles.sealDigit, reading.blocked ? styles.sealDigitBlocked : null]}
+                  style={[styles.sealDigit, shown.blocked ? styles.sealDigitBlocked : null]}
                 >
-                  {reading.displayedDigit}
+                  {shown.displayedDigit}
                 </AppText>
               </View>
               <AppText variant="title" style={styles.title}>
-                {reading.title}
+                {shown.title}
               </AppText>
             </View>
-            {reading.letter !== null ? (
+            {shown.letter !== null ? (
               <AppText variant="caption" style={styles.meta}>
-                Letra {reading.letter} na base da firma
+                Letra {shown.letter} na base da firma
               </AppText>
             ) : null}
-            {reading.unreducedSum !== null ? (
+            {shown.unreducedSum !== null ? (
               <AppText variant="caption" style={styles.meta}>
-                Soma {reading.unreducedSum} reduzida a {reading.displayedDigit} neste nó
+                Soma {shown.unreducedSum} reduzida a {shown.displayedDigit} neste nó
               </AppText>
             ) : null}
 
@@ -58,27 +117,27 @@ export function ArcanaBottomSheet({ reading, onClose }: ArcanaBottomSheetProps) 
               Arquétipo
             </AppText>
             <AppText variant="body" style={styles.copy}>
-              {reading.meaning.archetype}
+              {shown.meaning.archetype}
             </AppText>
 
             <AppText variant="body" style={styles.sectionLabel}>
               Vibração no nome
             </AppText>
             <AppText variant="body" style={styles.copy}>
-              {reading.meaning.nameVibration}
+              {shown.meaning.nameVibration}
             </AppText>
 
-            {reading.blocked ? (
+            {shown.blocked ? (
               <View style={styles.warn}>
                 <AppText variant="body" style={styles.warnText}>
                   Este nó participa de uma sequência de bloqueio. A repetição do dígito{' '}
-                  {reading.displayedDigit} pede retificação da firma.
+                  {shown.displayedDigit} pede retificação da firma.
                 </AppText>
               </View>
             ) : null}
 
-            <GhostButton label="Fechar" onPress={onClose} />
-          </View>
+            <GhostButton label="Fechar" onPress={dismiss} />
+          </Animated.View>
         ) : null}
       </View>
     </Modal>
@@ -100,13 +159,12 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'flex-end',
   },
-  backdrop: {
+  backdropFill: {
+    ...StyleSheet.absoluteFill,
     backgroundColor: 'rgba(7, 4, 15, 0.72)',
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
-    right: 0,
-    top: 0,
+  },
+  backdrop: {
+    flex: 1,
   },
   sheet: {
     backgroundColor: colors.ink,

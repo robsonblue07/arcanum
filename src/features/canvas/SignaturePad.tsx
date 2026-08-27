@@ -7,12 +7,14 @@ import {
 } from 'react-native';
 import Svg, { Line, Path } from 'react-native-svg';
 import { colors } from '../../theme';
+import { hapticGuidelineHit } from '../../lib/haptics';
 import { captureSignaturePng } from './export-signature';
 import {
   MIN_POINT_DISTANCE,
   SIGNATURE_STROKE_WIDTH,
   computeGuide,
   distance,
+  strokeCrossesGuide,
   toSvgPath,
   type Stroke,
 } from './signature-geometry';
@@ -38,6 +40,7 @@ export const SignaturePad = memo(
     const sizeRef = useRef(size);
     const captureRef = useRef<View>(null);
     const frame = useRef<number | null>(null);
+    const lastGuideHitAt = useRef(0);
 
     sizeRef.current = size;
 
@@ -93,6 +96,10 @@ export const SignaturePad = memo(
       };
     }, []);
 
+    const guide = useMemo(() => computeGuide(size.width, size.height), [size]);
+    const guideRef = useRef(guide);
+    guideRef.current = guide;
+
     const panResponder = useMemo(
       () =>
         PanResponder.create({
@@ -117,6 +124,18 @@ export const SignaturePad = memo(
             if (last !== undefined && distance(last, next) < MIN_POINT_DISTANCE) {
               return;
             }
+            const currentGuide = guideRef.current;
+            if (
+              currentGuide !== null &&
+              last !== undefined &&
+              strokeCrossesGuide(last, next, currentGuide)
+            ) {
+              const now = Date.now();
+              if (now - lastGuideHitAt.current > 180) {
+                lastGuideHitAt.current = now;
+                hapticGuidelineHit();
+              }
+            }
             stroke.push(next);
             scheduleFlush();
           },
@@ -136,8 +155,6 @@ export const SignaturePad = memo(
       const { width, height } = event.nativeEvent.layout;
       setSize({ width, height });
     };
-
-    const guide = useMemo(() => computeGuide(size.width, size.height), [size]);
 
     return (
       <View {...panResponder.panHandlers} collapsable={false} onLayout={onLayout} style={styles.board}>

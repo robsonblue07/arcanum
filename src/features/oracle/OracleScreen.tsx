@@ -91,6 +91,7 @@ export function OracleScreen() {
           </AppText>
           <GoldButton
             label={t('oracle.lockCta')}
+            haptic="warning"
             onPress={() => {
               router.push('/paywall');
             }}

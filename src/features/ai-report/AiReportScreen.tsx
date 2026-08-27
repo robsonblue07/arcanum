@@ -5,6 +5,7 @@ import { Redirect, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import type { CanonicalReportPayload } from '../../domain/numerology';
 import { getActiveLanguage } from '../../lib/i18n';
+import { hapticSuccess } from '../../lib/haptics';
 import { generateGrimoirePdf, shareGrimoirePdf } from '../../lib/pdf-generator';
 import { toUserError } from '../../lib/to-user-error';
 import {
@@ -18,6 +19,7 @@ import { useProfileStore } from '../../store/profile-store';
 import { colors, fonts, radii } from '../../theme';
 import { AppText } from '../../ui/AppText';
 import { GoldButton } from '../../ui/GoldButton';
+import { GoldenShimmerStack } from '../../ui/GoldenShimmer';
 import { Screen } from '../../ui/Screen';
 
 const TRANSMUTATION_KEYS = [
@@ -98,6 +100,7 @@ export function AiReportScreen() {
       setChapters(grimoire.chapters);
       setPdfUri(printed.uri);
       setProgress(100);
+      hapticSuccess();
     } catch (caught) {
       setError(toUserError(caught));
     } finally {
@@ -165,6 +168,7 @@ export function AiReportScreen() {
           </AppText>
           <GoldButton
             label={t('aiReport.lockCta')}
+            haptic="warning"
             onPress={() => {
               router.push('/paywall');
             }}
@@ -198,6 +202,7 @@ export function AiReportScreen() {
           <AppText variant="body" style={styles.phrase}>
             {t(TRANSMUTATION_KEYS[phraseIndex] ?? TRANSMUTATION_KEYS[0])}
           </AppText>
+          <GoldenShimmerStack count={4} itemHeight={72} />
         </View>
       ) : null}
 

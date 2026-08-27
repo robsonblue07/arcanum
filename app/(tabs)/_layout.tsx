@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Redirect, Tabs } from 'expo-router';
 import { useBootGate } from '../../src/store/use-boot-gate';
 import { colors, fonts } from '../../src/theme';
+import { hapticLight } from '../../src/lib/haptics';
 import { BootErrorScreen } from '../../src/ui/BootErrorScreen';
 import { FontSplash } from '../../src/ui/FontSplash';
 
@@ -51,6 +52,11 @@ export default function TabsLayout() {
             <Ionicons color={color} name="sparkles-outline" size={size} />
           ),
         }}
+        listeners={{
+          tabPress: () => {
+            hapticLight();
+          },
+        }}
       />
       <Tabs.Screen
         name="signature-lab"
@@ -59,6 +65,11 @@ export default function TabsLayout() {
           tabBarIcon: ({ color, size }) => (
             <Ionicons color={color} name="color-wand-outline" size={size} />
           ),
+        }}
+        listeners={{
+          tabPress: () => {
+            hapticLight();
+          },
         }}
       />
     </Tabs>

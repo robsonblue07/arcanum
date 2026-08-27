@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { calculatePythagoreanChart } from '../../domain/numerology/engines/pythagorean-chart';
 import { formatDisplayDate } from '../../lib/dates';
+import { hapticLight } from '../../lib/haptics';
 import { calculatePersonalDay } from '../../lib/personal-day';
 import { toUserError } from '../../lib/to-user-error';
 import { signOutCurrentUser } from '../../services';
@@ -16,6 +17,7 @@ import { AppText } from '../../ui/AppText';
 import { GhostButton } from '../../ui/GhostButton';
 import { GoldButton } from '../../ui/GoldButton';
 import { LanguageSwitcher } from '../../ui/LanguageSwitcher';
+import { GoldenShimmer } from '../../ui/GoldenShimmer';
 import { NumberSeal } from '../../ui/NumberSeal';
 import { Screen } from '../../ui/Screen';
 
@@ -77,7 +79,10 @@ export function DashboardScreen() {
 
       <Animated.View entering={FadeInDown.duration(700).delay(360)}>
         <Pressable
-          onPress={() => router.push('/oracle' as Href)}
+          onPress={() => {
+            hapticLight();
+            router.push('/oracle' as Href);
+          }}
           style={({ pressed }) => [styles.heroCard, styles.oracleCard, pressed && styles.pressed]}
         >
           <LinearGradient
@@ -86,6 +91,7 @@ export function DashboardScreen() {
             start={{ x: 0, y: 0 }}
             style={styles.heroInner}
           >
+            <GoldenShimmer height={3} style={styles.cardGleam} />
             <AppText variant="kicker">{t('dashboard.oracleKicker')}</AppText>
             <AppText variant="title" style={styles.heroTitle}>
               {t('dashboard.oracleTitle')}
@@ -104,7 +110,10 @@ export function DashboardScreen() {
 
       <Animated.View entering={FadeInDown.duration(700).delay(420)}>
         <Pressable
-          onPress={() => router.push('/triangle')}
+          onPress={() => {
+            hapticLight();
+            router.push('/triangle');
+          }}
           style={({ pressed }) => [styles.heroCard, styles.triangleCard, pressed && styles.pressed]}
         >
           <LinearGradient
@@ -113,6 +122,7 @@ export function DashboardScreen() {
             start={{ x: 0, y: 0 }}
             style={styles.heroInner}
           >
+            <GoldenShimmer height={3} style={styles.cardGleam} />
             <AppText variant="kicker">{t('dashboard.triangleKicker')}</AppText>
             <AppText variant="title" style={styles.heroTitle}>
               {t('dashboard.triangleTitle')}
@@ -131,7 +141,10 @@ export function DashboardScreen() {
 
       <Animated.View entering={FadeInDown.duration(700).delay(520)}>
         <Pressable
-          onPress={() => router.push('/synastry' as Href)}
+          onPress={() => {
+            hapticLight();
+            router.push('/synastry' as Href);
+          }}
           style={({ pressed }) => [styles.heroCard, styles.synastryCard, pressed && styles.pressed]}
         >
           <LinearGradient
@@ -140,6 +153,7 @@ export function DashboardScreen() {
             start={{ x: 0, y: 0 }}
             style={styles.heroInner}
           >
+            <GoldenShimmer height={3} style={styles.cardGleam} />
             <AppText variant="kicker">{t('dashboard.synastryKicker')}</AppText>
             <AppText variant="title" style={styles.heroTitle}>
               {t('dashboard.synastryTitle')}
@@ -158,7 +172,10 @@ export function DashboardScreen() {
 
       <Animated.View entering={FadeInDown.duration(700).delay(580)}>
         <Pressable
-          onPress={() => router.push('/ai-report' as Href)}
+          onPress={() => {
+            hapticLight();
+            router.push('/ai-report' as Href);
+          }}
           style={({ pressed }) => [styles.heroCard, styles.grimoireCard, pressed && styles.pressed]}
         >
           <LinearGradient
@@ -167,6 +184,7 @@ export function DashboardScreen() {
             start={{ x: 0, y: 0 }}
             style={styles.heroInner}
           >
+            <GoldenShimmer height={3} style={styles.cardGleam} />
             <AppText variant="kicker">{t('dashboard.grimoireKicker')}</AppText>
             <AppText variant="title" style={styles.heroTitle}>
               {t('dashboard.grimoireTitle')}
@@ -185,7 +203,10 @@ export function DashboardScreen() {
 
       <Animated.View entering={FadeInDown.duration(700).delay(600)}>
         <Pressable
-          onPress={() => router.push('/forge' as Href)}
+          onPress={() => {
+            hapticLight();
+            router.push('/forge' as Href);
+          }}
           style={({ pressed }) => [styles.heroCard, styles.forgeCard, pressed && styles.pressed]}
         >
           <LinearGradient
@@ -194,6 +215,7 @@ export function DashboardScreen() {
             start={{ x: 0, y: 0 }}
             style={styles.heroInner}
           >
+            <GoldenShimmer height={3} style={styles.cardGleam} />
             <AppText variant="kicker">{t('dashboard.forgeKicker')}</AppText>
             <AppText variant="title" style={styles.heroTitle}>
               {t('dashboard.forgeTitle')}
@@ -212,7 +234,10 @@ export function DashboardScreen() {
 
       <Animated.View entering={FadeInDown.duration(700).delay(620)}>
         <Pressable
-          onPress={() => router.push('/(tabs)/signature-lab')}
+          onPress={() => {
+            hapticLight();
+            router.push('/(tabs)/signature-lab');
+          }}
           style={({ pressed }) => [styles.heroCard, pressed && styles.pressed]}
         >
           <LinearGradient
@@ -221,6 +246,7 @@ export function DashboardScreen() {
             start={{ x: 0, y: 0 }}
             style={styles.heroInner}
           >
+            <GoldenShimmer height={3} style={styles.cardGleam} />
             <AppText variant="kicker" style={styles.heroKicker}>
               {t('dashboard.labKicker')}
             </AppText>
@@ -370,6 +396,11 @@ const styles = StyleSheet.create({
   heroInner: {
     padding: 22,
     gap: 10,
+  },
+  cardGleam: {
+    alignSelf: 'stretch',
+    borderRadius: radii.pill,
+    marginBottom: 2,
   },
   heroKicker: {
     color: colors.neon,

@@ -2,6 +2,7 @@ import { memo } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { changeAppLanguage, getActiveLanguage, type AppLanguage } from '../lib/i18n';
+import { hapticSelection } from '../lib/haptics';
 import { colors, fonts, radii } from '../theme';
 import { AppText } from './AppText';
 
@@ -32,6 +33,7 @@ export const LanguageSwitcher = memo(function LanguageSwitcher() {
               accessibilityState={{ selected }}
               hitSlop={8}
               onPress={() => {
+                hapticSelection();
                 void changeAppLanguage(option.code);
               }}
               style={styles.press}

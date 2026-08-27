@@ -1,13 +1,16 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import {
-  ActivityIndicator,
   Pressable,
   StyleSheet,
   Text,
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
+import { hapticLight, hapticSuccess, hapticWarning } from '../lib/haptics';
 import { colors, fonts, radii } from '../theme';
+import { GoldenShimmer } from './GoldenShimmer';
+
+export type ButtonHaptic = 'light' | 'success' | 'warning' | 'none';
 
 interface GoldButtonProps {
   label: string;
@@ -16,6 +19,7 @@ interface GoldButtonProps {
   loading?: boolean | undefined;
   style?: StyleProp<ViewStyle> | undefined;
   variant?: 'primary' | 'secondary' | undefined;
+  haptic?: ButtonHaptic | undefined;
 }
 
 export function GoldButton({
@@ -25,6 +29,7 @@ export function GoldButton({
   loading = false,
   style,
   variant = 'primary',
+  haptic = 'light',
 }: GoldButtonProps) {
   const dimmed = disabled || loading;
   const secondary = variant === 'secondary';
@@ -33,7 +38,16 @@ export function GoldButton({
     <Pressable
       accessibilityRole="button"
       disabled={dimmed}
-      onPress={onPress}
+      onPress={() => {
+        if (haptic === 'warning') {
+          hapticWarning();
+        } else if (haptic === 'success') {
+          hapticSuccess();
+        } else if (haptic === 'light') {
+          hapticLight();
+        }
+        onPress();
+      }}
       style={({ pressed }) => [
         styles.wrap,
         secondary && styles.wrapSecondary,
@@ -44,7 +58,7 @@ export function GoldButton({
     >
       {secondary ? (
         loading ? (
-          <ActivityIndicator color={colors.goldSoft} />
+          <GoldenShimmer height={18} style={styles.shimmerCompact} />
         ) : (
           <Text style={styles.labelSecondary}>{label}</Text>
         )
@@ -56,7 +70,7 @@ export function GoldButton({
           style={styles.gradient}
         >
           {loading ? (
-            <ActivityIndicator color={colors.void} />
+            <GoldenShimmer height={18} style={styles.shimmerOnGold} />
           ) : (
             <Text style={styles.label}>{label}</Text>
           )}
@@ -93,6 +107,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 16,
     paddingVertical: 14,
+  },
+  shimmerCompact: {
+    maxWidth: 120,
+  },
+  shimmerOnGold: {
+    backgroundColor: 'rgba(7, 4, 15, 0.18)',
+    maxWidth: 132,
   },
   label: {
     color: colors.void,
