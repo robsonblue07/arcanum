@@ -68,6 +68,10 @@ export default function RootLayout() {
           options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }}
         />
         <Stack.Screen
+          name="ai-report"
+          options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }}
+        />
+        <Stack.Screen
           name="train"
           options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }}
         />

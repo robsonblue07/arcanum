@@ -140,6 +140,33 @@ export function DashboardScreen() {
         </Pressable>
       </Animated.View>
 
+      <Animated.View entering={FadeInDown.duration(700).delay(580)}>
+        <Pressable
+          onPress={() => router.push('/ai-report' as Href)}
+          style={({ pressed }) => [styles.heroCard, styles.grimoireCard, pressed && styles.pressed]}
+        >
+          <LinearGradient
+            colors={['#3A2A08', '#12081F']}
+            end={{ x: 1, y: 1 }}
+            start={{ x: 0, y: 0 }}
+            style={styles.heroInner}
+          >
+            <AppText variant="kicker">Relatório IA</AppText>
+            <AppText variant="title" style={styles.heroTitle}>
+              Grimório Pessoal: Relatório Cabalístico IA
+            </AppText>
+            <AppText variant="body" style={styles.heroCopy}>
+              Quatro capítulos selados em PDF. A prosa é do Mestre; os números saem só dos motores.
+            </AppText>
+            <View style={styles.heroCta}>
+              <AppText variant="caption" style={styles.heroCtaText}>
+                Abrir grimório
+              </AppText>
+            </View>
+          </LinearGradient>
+        </Pressable>
+      </Animated.View>
+
       <Animated.View entering={FadeInDown.duration(700).delay(620)}>
         <Pressable
           onPress={() => router.push('/(tabs)/signature-lab')}
@@ -283,6 +310,10 @@ const styles = StyleSheet.create({
   synastryCard: {
     marginBottom: 14,
     borderColor: colors.goldSoft,
+  },
+  grimoireCard: {
+    marginBottom: 14,
+    borderColor: colors.gold,
   },
   heroInner: {
     padding: 22,

@@ -87,6 +87,8 @@ export {
   calculatePersonalDay,
   readDailyOracle,
   resolveLocalCalendarDate,
+  buildCanonicalReportPayload,
+  GRIMOIRE_CHAPTERS,
 } from './engines';
 
 export type {
@@ -105,6 +107,12 @@ export type {
   DailyOracle,
   OracleToday,
   PersonalCycles,
+  CanonicalArcana,
+  CanonicalBlockage,
+  CanonicalReportPayload,
+  CanonicalSignature,
+  ReportProfileInput,
+  SynastryReportSummary,
 } from './engines';
 
 export { generateOptimizedSignatures, selectRectifiedSignature } from './generators';

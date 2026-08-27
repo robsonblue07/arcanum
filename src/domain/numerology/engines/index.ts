@@ -3,6 +3,7 @@ import { buildKabbalisticTriangle } from './kabbalistic-triangle';
 import { findNegativeSequences } from './negative-sequences';
 import { calculateSynastry } from './synastry';
 import { calculatePersonalCycles, readDailyOracle } from './oracle';
+import { buildCanonicalReportPayload } from './report-payload';
 
 export { calculatePythagoreanChart } from './pythagorean-chart';
 export { buildKabbalisticTriangle } from './kabbalistic-triangle';
@@ -25,6 +26,15 @@ export {
   resolveLocalCalendarDate,
 } from './oracle';
 export type { DailyOracle, OracleToday, PersonalCycles } from './oracle';
+export { buildCanonicalReportPayload, GRIMOIRE_CHAPTERS } from './report-payload';
+export type {
+  CanonicalArcana,
+  CanonicalBlockage,
+  CanonicalReportPayload,
+  CanonicalSignature,
+  ReportProfileInput,
+  SynastryReportSummary,
+} from './report-payload';
 export type {
   AffinitySeal,
   ApexAlignmentKind,
@@ -46,4 +56,5 @@ export const numerologyEngines = {
   calculateSynastry,
   calculatePersonalCycles,
   readDailyOracle,
+  buildCanonicalReportPayload,
 } as const;
