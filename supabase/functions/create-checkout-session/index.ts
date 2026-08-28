@@ -25,16 +25,23 @@ serve(async (req) => {
   }
 
   try {
-    const stripeKey = requiredEnv('STRIPE_SECRET_KEY');
-    const lifetimePrice = requiredEnv('STRIPE_PRICE_LIFETIME');
-    const monthlyPrice = requiredEnv('STRIPE_PRICE_MONTHLY');
+    const stripeKey = Deno.env.get('STRIPE_SECRET_KEY')?.trim();
+    const lifetimePrice = Deno.env.get('STRIPE_PRICE_LIFETIME')?.trim();
+    const monthlyPrice = Deno.env.get('STRIPE_PRICE_MONTHLY')?.trim();
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')?.trim();
+    const supabaseAnonKey = (Deno.env.get('SUPABASE_ANON_KEY') ?? Deno.env.get('SUPABASE_SERVICE_ROLE_KEY'))?.trim();
+
+    if (!stripeKey) throw new Error('Variavel STRIPE_SECRET_KEY nao configurada');
+    if (!lifetimePrice) throw new Error('Variavel STRIPE_PRICE_LIFETIME nao configurada');
+    if (!monthlyPrice) throw new Error('Variavel STRIPE_PRICE_MONTHLY nao configurada');
+    if (!supabaseUrl || !supabaseAnonKey) throw new Error('Variaveis do Supabase nao configuradas');
 
     const authHeader = req.headers.get('Authorization');
-    if (authHeader === null || !authHeader.toLowerCase().startsWith('bearer ')) {
+    if (!authHeader || !authHeader.toLowerCase().startsWith('bearer ')) {
       return json({ error: 'missing_authorization' }, 401);
     }
 
-    const supabase = createClient(requiredEnv('SUPABASE_URL'), requiredEnv('SUPABASE_ANON_KEY'), {
+    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
       global: { headers: { Authorization: authHeader } },
       auth: { persistSession: false, autoRefreshToken: false },
     });
@@ -45,13 +52,14 @@ serve(async (req) => {
       error: userError,
     } = await supabase.auth.getUser(token);
 
-    if (userError !== null || user === null) {
+    if (userError || !user) {
+      console.error('Erro de autenticacao Supabase:', userError);
       return json({ error: 'invalid_jwt' }, 401);
     }
 
     const body = (await req.json()) as CheckoutBody;
     const plan = parsePlan(body.plan);
-    if (plan === null) {
+    if (!plan) {
       return json({ error: 'invalid_plan' }, 400);
     }
 
@@ -66,11 +74,10 @@ serve(async (req) => {
 
     const stripe = new Stripe(stripeKey);
     const isLifetime = plan === 'lifetime';
-    const existingCustomer = profileHasCustomer(profile) ? profile.stripe_customer_id : null;
+    const existingCustomer = profile?.stripe_customer_id || null;
 
     const sessionParams: Stripe.Checkout.SessionCreateParams = {
       mode: isLifetime ? 'payment' : 'subscription',
-      payment_method_types: isLifetime ? ['card', 'pix'] : ['card'],
       line_items: [{ price: isLifetime ? lifetimePrice : monthlyPrice, quantity: 1 }],
       client_reference_id: user.id,
       metadata: {
@@ -81,9 +88,9 @@ serve(async (req) => {
       cancel_url: cancelUrl,
     };
 
-    if (existingCustomer !== null) {
+    if (existingCustomer) {
       sessionParams.customer = existingCustomer;
-    } else if (user.email !== undefined && user.email.length > 0) {
+    } else if (user.email) {
       sessionParams.customer_email = user.email;
     }
 
@@ -98,14 +105,14 @@ serve(async (req) => {
 
     const session = await stripe.checkout.sessions.create(sessionParams);
 
-    if (session.url === null || session.url.length === 0) {
+    if (!session.url) {
       return json({ error: 'missing_checkout_url' }, 500);
     }
 
     return json({ url: session.url });
-  } catch (caught) {
-    const message = caught instanceof Error ? caught.message : 'checkout_failed';
-    return json({ error: message }, 500);
+  } catch (caught: any) {
+    console.error('DETALHES DO ERRO NO CHECKOUT:', caught?.message || caught);
+    return json({ error: caught?.message || 'checkout_failed' }, 500);
   }
 });
 
@@ -114,14 +121,6 @@ function json(payload: Record<string, unknown>, status = 200): Response {
     status,
     headers: { ...corsHeaders, 'Content-Type': 'application/json' },
   });
-}
-
-function requiredEnv(name: string): string {
-  const value = Deno.env.get(name)?.trim() ?? '';
-  if (value.length === 0) {
-    throw new Error(`missing_env:${name}`);
-  }
-  return value;
 }
 
 function parsePlan(value: unknown): CheckoutPlan | null {
@@ -147,10 +146,4 @@ function checkoutUrls(platform: CheckoutPlatform): { successUrl: string; cancelU
     successUrl: 'arcanum://paywall?checkout=success&session_id={CHECKOUT_SESSION_ID}',
     cancelUrl: 'arcanum://paywall?checkout=cancel',
   };
-}
-
-function profileHasCustomer(
-  profile: { stripe_customer_id?: string | null } | null,
-): profile is { stripe_customer_id: string } {
-  return typeof profile?.stripe_customer_id === 'string' && profile.stripe_customer_id.length > 0;
 }
