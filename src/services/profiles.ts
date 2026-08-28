@@ -1,5 +1,5 @@
 import { getSupabase } from './supabase';
-import type { ProfileInsert, ProfileRow, ProfileUpdate } from './database.types';
+import type { ProfileInsert, ProfileRow } from './database.types';
 import type { UserProfile } from '../store/profile-store';
 
 export function profileRowToLocal(row: ProfileRow): UserProfile {
@@ -28,25 +28,6 @@ export async function upsertProfile(input: ProfileInsert): Promise<ProfileRow> {
   const { data, error } = await getSupabase()
     .from('profiles')
     .upsert(input, { onConflict: 'id' })
-    .select('*')
-    .single();
-
-  if (error) {
-    throw error;
-  }
-
-  return data as ProfileRow;
-}
-
-export async function updateProfilePremium(
-  userId: string,
-  isPremium: boolean,
-): Promise<ProfileRow> {
-  const payload: ProfileUpdate = { is_premium: isPremium };
-  const { data, error } = await getSupabase()
-    .from('profiles')
-    .update(payload)
-    .eq('id', userId)
     .select('*')
     .single();
 

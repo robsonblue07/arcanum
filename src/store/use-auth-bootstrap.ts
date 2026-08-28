@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
-import { fetchProfile, isSupabaseConfigured, profileRowToLocal } from '../services';
+import * as Linking from 'expo-linking';
+import { fetchProfile, handleCheckoutReturnUrl, isSupabaseConfigured, profileRowToLocal } from '../services';
 import { getSupabase } from '../services/supabase';
 import { toUserError } from '../lib/to-user-error';
 import { withTimeout } from '../lib/with-timeout';
@@ -101,6 +102,23 @@ export function useAuthBootstrap(): void {
 
     void boot();
 
+    const applyCheckoutUrl = (url: string | null): void => {
+      if (url === null || url.length === 0) {
+        return;
+      }
+      handleCheckoutReturnUrl(url);
+    };
+
+    void Linking.getInitialURL().then((url) => {
+      if (!cancelled) {
+        applyCheckoutUrl(url);
+      }
+    });
+
+    const linking = Linking.addEventListener('url', (event) => {
+      applyCheckoutUrl(event.url);
+    });
+
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
@@ -122,6 +140,7 @@ export function useAuthBootstrap(): void {
 
     return () => {
       cancelled = true;
+      linking.remove();
       subscription.unsubscribe();
     };
   }, [

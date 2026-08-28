@@ -1,8 +1,9 @@
 import 'react-native-gesture-handler';
-import { Stack } from 'expo-router';
+import { Stack, usePathname, useRouter } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect, useState } from 'react';
 import { hydrateStoredLanguage } from '../src/lib/i18n';
+import { useCheckoutStore } from '../src/store/checkout-store';
 import { colors } from '../src/theme';
 import { useAppFonts } from '../src/theme/use-app-fonts';
 import { useAuthBootstrap } from '../src/store/use-auth-bootstrap';
@@ -20,11 +21,24 @@ try {
 export default function RootLayout() {
   const fontsLoaded = useAppFonts();
   const [fontsTimedOut, setFontsTimedOut] = useState(false);
+  const confirmingCheckout = useCheckoutStore((state) => state.confirming);
+  const pathname = usePathname();
+  const router = useRouter();
   useAuthBootstrap();
 
   useEffect(() => {
     void hydrateStoredLanguage();
   }, []);
+
+  useEffect(() => {
+    if (!confirmingCheckout || pathname === '/paywall') {
+      return;
+    }
+    router.push({
+      pathname: '/paywall',
+      params: { checkout: 'success' },
+    });
+  }, [confirmingCheckout, pathname, router]);
 
   useEffect(() => {
     if (fontsLoaded) {

@@ -74,7 +74,10 @@
     "priceLifetime": "R$ 97,00",
     "priceMonthly": "R$ 29,90",
     "cta": "Garantir Minha Transformação Agora",
-    "restore": "Restaurar Compras"
+    "restore": "Restaurar Compras",
+    "confirming": "Confirmando pagamento...",
+    "confirmTimeout": "Pagamento recebido. Se o Pro não liberar em instantes, toque em Restaurar Compras.",
+    "restoreEmpty": "Nenhuma compra Pro encontrada nesta conta."
   },
   "report": {
     "kicker": "Diagnóstico da firma",

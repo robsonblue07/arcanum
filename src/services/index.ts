@@ -1,5 +1,6 @@
 export { getSupabase, isSupabaseConfigured } from './supabase';
-export { fetchProfile, upsertProfile, updateProfilePremium, profileRowToLocal } from './profiles';
+export { fetchProfile, upsertProfile, profileRowToLocal } from './profiles';
+export { startStripeCheckout, refreshPremiumFromServer, waitForPremiumUnlock, handleCheckoutReturnUrl } from './checkout';
 export { insertTrainedSignature } from './signatures';
 export { signOutCurrentUser } from './session';
 export {

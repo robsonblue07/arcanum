@@ -10,7 +10,7 @@ import { hapticLight } from '../../lib/haptics';
 import { calculatePersonalDay } from '../../lib/personal-day';
 import { toUserError } from '../../lib/to-user-error';
 import { signOutCurrentUser } from '../../services';
-import { setPremiumUnlocked, useIsPremium } from '../../store/premium';
+import { setLocalPremiumUnlocked, useIsPremium } from '../../store/premium';
 import { useProfileStore } from '../../store/profile-store';
 import { colors, fonts, radii } from '../../theme';
 import { AppText } from '../../ui/AppText';
@@ -29,7 +29,6 @@ export function DashboardScreen() {
   const [leaving, setLeaving] = useState(false);
   const [leaveError, setLeaveError] = useState<string | undefined>();
   const isPremium = useIsPremium();
-  const [simulating, setSimulating] = useState(false);
 
   const chart = useMemo(() => {
     if (profile === null) {
@@ -294,20 +293,9 @@ export function DashboardScreen() {
         />
         {__DEV__ ? (
           <GhostButton
-            disabled={simulating}
             label={isPremium ? t('dashboard.devFree') : t('dashboard.devPro')}
             onPress={() => {
-              void (async () => {
-                setSimulating(true);
-                setLeaveError(undefined);
-                try {
-                  await setPremiumUnlocked(!isPremium);
-                } catch (caught) {
-                  setLeaveError(toUserError(caught));
-                } finally {
-                  setSimulating(false);
-                }
-              })();
+              setLocalPremiumUnlocked(!isPremium);
             }}
             style={styles.devToggle}
           />

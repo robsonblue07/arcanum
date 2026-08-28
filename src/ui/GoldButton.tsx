@@ -1,5 +1,6 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import {
+  ActivityIndicator,
   Pressable,
   StyleSheet,
   Text,
@@ -11,6 +12,7 @@ import { colors, fonts, radii } from '../theme';
 import { GoldenShimmer } from './GoldenShimmer';
 
 export type ButtonHaptic = 'light' | 'success' | 'warning' | 'none';
+export type ButtonLoader = 'shimmer' | 'spinner';
 
 interface GoldButtonProps {
   label: string;
@@ -20,6 +22,7 @@ interface GoldButtonProps {
   style?: StyleProp<ViewStyle> | undefined;
   variant?: 'primary' | 'secondary' | undefined;
   haptic?: ButtonHaptic | undefined;
+  loader?: ButtonLoader | undefined;
 }
 
 export function GoldButton({
@@ -30,6 +33,7 @@ export function GoldButton({
   style,
   variant = 'primary',
   haptic = 'light',
+  loader = 'shimmer',
 }: GoldButtonProps) {
   const dimmed = disabled || loading;
   const secondary = variant === 'secondary';
@@ -58,7 +62,11 @@ export function GoldButton({
     >
       {secondary ? (
         loading ? (
-          <GoldenShimmer height={18} style={styles.shimmerCompact} />
+          loader === 'spinner' ? (
+            <ActivityIndicator color={colors.goldSoft} />
+          ) : (
+            <GoldenShimmer height={18} style={styles.shimmerCompact} />
+          )
         ) : (
           <Text style={styles.labelSecondary}>{label}</Text>
         )
@@ -70,7 +78,11 @@ export function GoldButton({
           style={styles.gradient}
         >
           {loading ? (
-            <GoldenShimmer height={18} style={styles.shimmerOnGold} />
+            loader === 'spinner' ? (
+              <ActivityIndicator color={colors.void} />
+            ) : (
+              <GoldenShimmer height={18} style={styles.shimmerOnGold} />
+            )
           ) : (
             <Text style={styles.label}>{label}</Text>
           )}

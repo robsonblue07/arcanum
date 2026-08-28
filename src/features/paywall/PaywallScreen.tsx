@@ -1,11 +1,16 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { toUserError } from '../../lib/to-user-error';
-import { hapticSelection } from '../../lib/haptics';
-import { setPremiumUnlocked } from '../../store/premium';
+import { hapticSelection, hapticSuccess } from '../../lib/haptics';
+import {
+  refreshPremiumFromServer,
+  startStripeCheckout,
+  waitForPremiumUnlock,
+} from '../../services';
+import { useCheckoutStore } from '../../store/checkout-store';
 import { colors, fonts, radii } from '../../theme';
 import { AppText } from '../../ui/AppText';
 import { GhostButton } from '../../ui/GhostButton';
@@ -19,29 +24,89 @@ const BENEFIT_KEYS = ['paywall.benefit1', 'paywall.benefit2', 'paywall.benefit3'
 export function PaywallScreen() {
   const { t } = useTranslation();
   const router = useRouter();
-  const params = useLocalSearchParams<{ intent?: string | string[] }>();
+  const params = useLocalSearchParams<{ intent?: string | string[]; checkout?: string | string[] }>();
   const fromForge = firstParam(params.intent) === 'forge';
+  const checkoutParam = firstParam(params.checkout);
+  const confirming = useCheckoutStore((state) => state.confirming);
   const [plan, setPlan] = useState<PlanId>('lifetime');
   const [loading, setLoading] = useState(false);
+  const [restoring, setRestoring] = useState(false);
   const [error, setError] = useState<string | undefined>();
+  const confirmStarted = useRef(false);
+
+  const destination = fromForge ? ('/forge' as Href) : ('/(tabs)/signature-lab' as Href);
+  const busy = loading || confirming || restoring;
 
   const close = () => {
     if (router.canGoBack()) {
       router.back();
       return;
     }
-    router.replace(fromForge ? ('/forge' as Href) : '/(tabs)/signature-lab');
+    router.replace(destination);
   };
 
-  const unlock = async () => {
+  const finishUnlocked = (): void => {
+    hapticSuccess();
+    router.replace(destination);
+  };
+
+  useEffect(() => {
+    const shouldConfirm = checkoutParam === 'success' || confirming;
+    if (!shouldConfirm || confirmStarted.current) {
+      return;
+    }
+    confirmStarted.current = true;
+    setError(undefined);
+    void (async () => {
+      try {
+        const unlocked = await waitForPremiumUnlock();
+        if (unlocked) {
+          finishUnlocked();
+          return;
+        }
+        setError(t('paywall.confirmTimeout'));
+      } catch (caught) {
+        setError(toUserError(caught));
+      }
+    })();
+  }, [checkoutParam, confirming, t]);
+
+  const onBuy = async (): Promise<void> => {
     setLoading(true);
     setError(undefined);
     try {
-      await setPremiumUnlocked(true);
-      router.replace(fromForge ? ('/forge' as Href) : '/(tabs)/signature-lab');
+      const result = await startStripeCheckout(plan);
+      if (result !== 'success') {
+        return;
+      }
+      confirmStarted.current = true;
+      const unlocked = await waitForPremiumUnlock();
+      if (unlocked) {
+        finishUnlocked();
+        return;
+      }
+      setError(t('paywall.confirmTimeout'));
     } catch (caught) {
       setError(toUserError(caught));
+    } finally {
       setLoading(false);
+    }
+  };
+
+  const onRestore = async (): Promise<void> => {
+    setRestoring(true);
+    setError(undefined);
+    try {
+      const unlocked = await refreshPremiumFromServer();
+      if (unlocked) {
+        finishUnlocked();
+        return;
+      }
+      setError(t('paywall.restoreEmpty'));
+    } catch (caught) {
+      setError(toUserError(caught));
+    } finally {
+      setRestoring(false);
     }
   };
 
@@ -114,6 +179,15 @@ export function PaywallScreen() {
         </AppText>
       </Pressable>
 
+      {confirming ? (
+        <View style={styles.confirming}>
+          <ActivityIndicator color={colors.gold} />
+          <AppText variant="body" style={styles.confirmingText}>
+            {t('paywall.confirming')}
+          </AppText>
+        </View>
+      ) : null}
+
       {error !== undefined ? (
         <AppText variant="body" style={styles.error}>
           {error}
@@ -121,19 +195,21 @@ export function PaywallScreen() {
       ) : null}
 
       <GoldButton
+        disabled={busy}
         label={fromForge ? t('paywall.forgeCta') : t('paywall.cta')}
-        loading={loading}
+        loader="spinner"
+        loading={loading || confirming}
         onPress={() => {
-          void unlock();
+          void onBuy();
         }}
         style={styles.cta}
       />
 
       <GhostButton
-        disabled={loading}
+        disabled={busy}
         label={t('paywall.restore')}
         onPress={() => {
-          void unlock();
+          void onRestore();
         }}
         style={styles.restore}
       />
@@ -217,6 +293,17 @@ const styles = StyleSheet.create({
     color: colors.goldSoft,
     letterSpacing: 1.2,
     marginTop: 4,
+  },
+  confirming: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 10,
+    marginBottom: 12,
+  },
+  confirmingText: {
+    color: colors.goldSoft,
+    flex: 1,
+    fontSize: 14,
   },
   error: {
     color: colors.danger,

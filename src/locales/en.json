@@ -74,7 +74,10 @@
     "priceLifetime": "R$ 97,00",
     "priceMonthly": "R$ 29,90",
     "cta": "Secure My Transformation Now",
-    "restore": "Restore Purchases"
+    "restore": "Restore Purchases",
+    "confirming": "Confirming payment...",
+    "confirmTimeout": "Payment received. If Pro does not unlock in a moment, tap Restore Purchases.",
+    "restoreEmpty": "No Pro purchase was found for this account."
   },
   "report": {
     "kicker": "Signature diagnosis",

@@ -15,7 +15,8 @@
         {
           "backgroundColor": "#07040F"
         }
-      ]
+      ],
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true
